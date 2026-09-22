@@ -1,20 +1,28 @@
 const $ = (id) => document.getElementById(id);
 let editingId = null;
+let settings = { 박람회명: "박람회", 판매제품: [] };
+let activeProducts = PRODUCTS;
 
 // ---- product dropdowns ----
-const productNames = [...new Set(PRODUCTS.map(p => p.name))];
 function fillProductSelect() {
-  const sel = $("f-상품명");
-  sel.innerHTML = productNames.map(n => `<option value="${n}">${n}</option>`).join("");
+  const names = [...new Set(activeProducts.map(p => p.name))];
+  $("f-상품명").innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join("");
   fillOptionSelect();
 }
 function fillOptionSelect() {
   const name = $("f-상품명").value;
-  const opts = PRODUCTS.filter(p => p.name === name);
+  const opts = activeProducts.filter(p => p.name === name);
   $("f-옵션").innerHTML = opts.map(o => `<option value="${o.code}|||${o.option}">${o.option} (${o.code})</option>`).join("");
 }
 $("f-상품명").addEventListener("change", fillOptionSelect);
 fillProductSelect();
+
+async function loadSettings() {
+  const { data, error } = await sb.from("settings").select("*").eq("id", 1).single();
+  if (error || !data) return;
+  settings = data;
+  activeProducts = (data.판매제품 && data.판매제품.length) ? data.판매제품 : PRODUCTS;
+}
 
 // ---- default field values ----
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -23,7 +31,7 @@ function resetForm() {
   $("form-title").textContent = "주문 입력";
   $("submit-btn").textContent = "주문 저장";
   $("cancel-edit-btn").classList.add("hidden");
-  $("f-판매처").value = localStorage.getItem("판매처_default") || "박람회";
+  $("f-판매처").value = settings.박람회명 || "박람회";
   $("f-주문일").value = today();
   $("f-업체명").value = "";
   fillProductSelect();
@@ -48,8 +56,8 @@ function genOrderNo() {
 function readForm() {
   const [코드, 옵션] = $("f-옵션").value.split("|||");
   return {
-    판매처: $("f-판매처").value.trim(),
-    주문일: $("f-주문일").value,
+    판매처: settings.박람회명 || "박람회",
+    주문일: today(),
     상품명: $("f-상품명").value,
     상품코드: 코드,
     옵션명: 옵션,
@@ -76,7 +84,6 @@ $("submit-btn").addEventListener("click", async () => {
     $("err").textContent = "개인정보 수집·이용에 동의해야 주문을 저장할 수 있습니다.";
     return;
   }
-  localStorage.setItem("판매처_default", data.판매처);
   $("err").textContent = "";
   if (editingId) {
     const { error } = await sb.from("orders").update(data).eq("id", editingId);
@@ -139,11 +146,12 @@ $("login-btn").addEventListener("click", async () => {
 
 $("logout-btn").addEventListener("click", () => sb.auth.signOut());
 
-sb.auth.onAuthStateChange((_event, session) => {
+sb.auth.onAuthStateChange(async (_event, session) => {
   if (session) {
     $("login-card").classList.add("hidden");
     $("app").classList.remove("hidden");
     $("whoami").textContent = session.user.email;
+    await loadSettings();
     resetForm();
     loadEditFromUrl();
   } else {

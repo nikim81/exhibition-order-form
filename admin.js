@@ -45,8 +45,26 @@ async function deleteOrder(id) {
 $("search").addEventListener("input", renderTable);
 $("refresh-btn").addEventListener("click", loadOrders);
 
-$("export-btn").addEventListener("click", () => {
-  const rows = orders.map(o => COLUMNS.map(c => o[c] ?? ""));
+function explodeOrder(o, bundleMap) {
+  const bundle = bundleMap[`${o.상품코드}|||${o.옵션명}`];
+  if (!bundle) return [o];
+  return bundle.구성품.map((part, i) => ({
+    ...o,
+    상품명: part.상품명,
+    상품코드: part.상품코드,
+    옵션명: part.옵션명,
+    수량: part.수량 * (o.수량 || 1),
+    주문금액: i === 0 ? o.주문금액 : "", // 금액 중복 계상 방지: 첫 줄에만 표시
+  }));
+}
+
+$("export-btn").addEventListener("click", async () => {
+  const { data: settingsRow } = await sb.from("settings").select("묶음구성").eq("id", 1).single();
+  const bundleMap = {};
+  (settingsRow?.묶음구성 || []).forEach(b => { bundleMap[b.코드옵션] = b; });
+
+  const exploded = orders.flatMap(o => explodeOrder(o, bundleMap));
+  const rows = exploded.map(o => COLUMNS.map(c => o[c] ?? ""));
   const ws = XLSX.utils.aoa_to_sheet([COLUMNS, ...rows]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
