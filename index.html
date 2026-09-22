@@ -6,10 +6,12 @@
 <title>유팡 박람회 출고 요청서</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="customer.css">
 </head>
 <body>
 
 <div id="login-card" class="card">
+  <img class="logo" src="images/upang-logo.png" alt="UPANG">
   <h2>스태프 로그인</h2>
   <label>이메일</label>
   <input id="login-email" type="email" autocomplete="username">
@@ -20,13 +22,13 @@
 </div>
 
 <div id="app" class="hidden">
+  <div id="staff-corner">
+    <a href="admin.html" title="관리자">🔒</a>
+    <button id="logout-btn" title="로그아웃">⎋</button>
+  </div>
   <header>
-    <h1>유팡 박람회 출고 요청서</h1>
-    <div id="userbar">
-      <span id="whoami"></span>
-      <a href="admin.html" class="ghost" style="color:#fff;text-decoration:none;padding:6px 12px;border-radius:4px;background:#374151;">🔒 관리자</a>
-      <button id="logout-btn">로그아웃</button>
-    </div>
+    <img class="logo" src="images/upang-logo.png" alt="UPANG">
+    <div class="tagline">박람회 현장 주문서</div>
   </header>
   <main>
     <div class="card">

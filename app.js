@@ -170,7 +170,6 @@ sb.auth.onAuthStateChange(async (_event, session) => {
   if (session) {
     $("login-card").classList.add("hidden");
     $("app").classList.remove("hidden");
-    $("whoami").textContent = session.user.email;
     await loadSettings();
     resetForm();
     loadEditFromUrl();
