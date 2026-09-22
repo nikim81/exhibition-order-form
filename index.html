@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>유팡 박람회 출고 요청서</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Malgun Gothic", sans-serif; background: #f4f5f7; margin: 0; color: #222; }
+  header { background: #1f2937; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { font-size: 18px; margin: 0; }
+  #userbar { font-size: 13px; display: flex; gap: 12px; align-items: center; }
+  #userbar button { background: #374151; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+  main { max-width: 960px; margin: 20px auto; padding: 0 16px; }
+  .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  #login-card { max-width: 360px; margin: 80px auto; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
+  input, select, textarea { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+  button.primary { margin-top: 16px; background: #2563eb; color: #fff; border: none; padding: 10px 18px; border-radius: 4px; font-size: 14px; cursor: pointer; }
+  button.primary:hover { background: #1d4ed8; }
+  button.ghost { background: #e5e7eb; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; margin-left: 8px; }
+  button.export { background: #059669; color: #fff; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+  th, td { border-bottom: 1px solid #eee; padding: 6px 8px; text-align: left; white-space: nowrap; }
+  th { background: #f9fafb; position: sticky; top: 0; }
+  #table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; }
+  .actions button { font-size: 12px; padding: 4px 8px; margin-right: 4px; cursor: pointer; }
+  #err { color: #dc2626; font-size: 13px; min-height: 18px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; }
+  #count-badge { font-size: 13px; color: #555; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="login-card" class="card">
+  <h2>스태프 로그인</h2>
+  <label>이메일</label>
+  <input id="login-email" type="email" autocomplete="username">
+  <label>비밀번호</label>
+  <input id="login-pw" type="password" autocomplete="current-password">
+  <div id="login-err" style="color:#dc2626;font-size:13px;min-height:18px;margin-top:6px;"></div>
+  <button class="primary" id="login-btn" style="width:100%;">로그인</button>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>유팡 박람회 출고 요청서</h1>
+    <div id="userbar">
+      <span id="whoami"></span>
+      <button id="logout-btn">로그아웃</button>
+    </div>
+  </header>
+  <main>
+    <div class="card">
+      <h2 id="form-title">주문 입력</h2>
+      <div class="row3">
+        <div><label>판매처</label><input id="f-판매처"></div>
+        <div><label>주문일</label><input id="f-주문일" type="date"></div>
+        <div><label>업체명</label><input id="f-업체명"></div>
+      </div>
+      <div class="row2">
+        <div><label>상품명</label><select id="f-상품명"></select></div>
+        <div><label>옵션명 (상품코드)</label><select id="f-옵션"></select></div>
+      </div>
+      <div class="row2">
+        <div><label>수량</label><input id="f-수량" type="number" min="1" value="1"></div>
+        <div><label>주문금액</label><input id="f-주문금액" type="number" min="0"></div>
+      </div>
+      <div class="row2">
+        <div><label>수취인 *</label><input id="f-수취인"></div>
+        <div><label>연락처 *</label><input id="f-연락처" placeholder="010-0000-0000"></div>
+      </div>
+      <div class="row2">
+        <div><label>우편번호</label><input id="f-우편번호"></div>
+        <div><label>배송희망일자</label><input id="f-배송희망일자" type="date"></div>
+      </div>
+      <label>주소 *</label>
+      <input id="f-주소">
+      <label>배송메세지</label>
+      <textarea id="f-배송메세지" rows="2"></textarea>
+      <div id="err"></div>
+      <button class="primary" id="submit-btn">주문 저장</button>
+      <button class="ghost hidden" id="cancel-edit-btn">취소</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>주문 목록 <span id="count-badge"></span></h2>
+        <div>
+          <button id="refresh-btn" class="ghost">새로고침</button>
+          <button id="export-btn" class="export">사방넷 업로드용 다운로드</button>
+        </div>
+      </div>
+      <div id="table-wrap">
+        <table>
+          <thead><tr>
+            <th>판매처</th><th>주문번호</th><th>주문일</th><th>상품명</th><th>상품코드</th><th>옵션명</th>
+            <th>수량</th><th>주문금액</th><th>업체명</th><th>수취인</th><th>연락처</th><th>우편번호</th>
+            <th>주소</th><th>배송희망일자</th><th>배송메세지</th><th></th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="products.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
