@@ -12,7 +12,26 @@ function fillProductSelect() {
 function fillOptionSelect() {
   const name = $("f-상품명").value;
   const opts = activeProducts.filter(p => p.name === name);
-  $("f-옵션").innerHTML = opts.map(o => `<option value="${o.code}|||${o.option}">${o.option} (${o.code})</option>`).join("");
+  $("f-옵션").value = opts.length ? `${opts[0].code}|||${opts[0].option}` : "";
+  renderSwatchGrid(opts, $("f-옵션").value);
+}
+function renderSwatchGrid(opts, selectedValue) {
+  const grid = $("f-옵션-grid");
+  grid.innerHTML = opts.map(o => {
+    const val = `${o.code}|||${o.option}`;
+    const master = PRODUCTS.find(p => p.code === o.code && p.option === o.option) || o;
+    const img = master.image
+      ? `<img src="${master.image}" alt="${o.option}">`
+      : `<div style="aspect-ratio:4/5;border-radius:6px;background:#ddd;"></div>`;
+    return `<div class="swatch${val === selectedValue ? " selected" : ""}" data-value="${val}">${img}<span>${o.option}</span></div>`;
+  }).join("");
+  grid.querySelectorAll(".swatch").forEach(el => {
+    el.addEventListener("click", () => {
+      $("f-옵션").value = el.dataset.value;
+      grid.querySelectorAll(".swatch").forEach(s => s.classList.remove("selected"));
+      el.classList.add("selected");
+    });
+  });
 }
 $("f-상품명").addEventListener("change", fillOptionSelect);
 fillProductSelect();
@@ -112,8 +131,9 @@ function startEdit(order) {
   $("f-판매처").value = order.판매처 || "";
   $("f-주문일").value = order.주문일 || "";
   $("f-상품명").value = order.상품명 || "";
-  fillOptionSelect();
+  const opts = activeProducts.filter(p => p.name === $("f-상품명").value);
   $("f-옵션").value = `${order.상품코드}|||${order.옵션명}`;
+  renderSwatchGrid(opts, $("f-옵션").value);
   $("f-수량").value = order.수량 || 1;
   $("f-주문금액").value = order.주문금액 || "";
   $("f-업체명").value = order.업체명 || "";

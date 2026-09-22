@@ -36,10 +36,11 @@
         <div><label>주문일</label><input id="f-주문일" type="date" readonly></div>
         <div><label>업체명</label><input id="f-업체명"></div>
       </div>
-      <div class="row2">
-        <div><label>상품명</label><select id="f-상품명"></select></div>
-        <div><label>옵션명 (상품코드)</label><select id="f-옵션"></select></div>
-      </div>
+      <label>상품명</label>
+      <select id="f-상품명"></select>
+      <label>컬러 선택</label>
+      <input type="hidden" id="f-옵션">
+      <div id="f-옵션-grid" class="swatch-grid"></div>
       <div class="row2">
         <div><label>수량</label><input id="f-수량" type="number" min="1" value="1"></div>
         <div><label>주문금액</label><input id="f-주문금액" type="number" min="0"></div>
