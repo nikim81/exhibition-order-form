@@ -42,6 +42,7 @@ function resetForm() {
   $("f-배송희망일자").value = "";
   $("f-주소").value = "";
   $("f-배송메세지").value = "";
+  $("f-동의").checked = false;
   $("err").textContent = "";
 }
 
@@ -68,6 +69,7 @@ function readForm() {
     주소: $("f-주소").value.trim(),
     배송희망일자: $("f-배송희망일자").value,
     배송메세지: $("f-배송메세지").value.trim(),
+    개인정보동의: $("f-동의").checked,
   };
 }
 
@@ -75,6 +77,10 @@ $("submit-btn").addEventListener("click", async () => {
   const data = readForm();
   if (!data.수취인 || !data.연락처 || !data.주소) {
     $("err").textContent = "수취인, 연락처, 주소는 필수입니다.";
+    return;
+  }
+  if (!data.개인정보동의) {
+    $("err").textContent = "개인정보 수집·이용에 동의해야 주문을 저장할 수 있습니다.";
     return;
   }
   localStorage.setItem("판매처_default", data.판매처);
@@ -114,6 +120,7 @@ function startEdit(order) {
   $("f-배송희망일자").value = order.배송희망일자 || "";
   $("f-주소").value = order.주소 || "";
   $("f-배송메세지").value = order.배송메세지 || "";
+  $("f-동의").checked = !!order.개인정보동의;
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
