@@ -33,35 +33,42 @@
   <main>
     <div class="card">
       <h2 id="form-title">주문 입력</h2>
-      <label>성함 *</label>
-      <input id="f-수취인">
-      <label>연락처 *</label>
-      <input id="f-연락처" placeholder="010-0000-0000">
-      <label>주소 *</label>
-      <input id="f-주소">
+
+      <div class="zone zone-customer">
+        <div class="zone-tag">✏ 고객 작성</div>
+        <label>성함 *</label>
+        <input id="f-수취인">
+        <label>연락처 *</label>
+        <input id="f-연락처" placeholder="010-0000-0000">
+        <label>주소 *</label>
+        <input id="f-주소">
+      </div>
 
       <div class="tear-line"><span>✂ 여기까지 작성</span></div>
 
-      <div class="row3">
-        <div><label>판매처</label><input id="f-판매처" readonly></div>
-        <div><label>주문일</label><input id="f-주문일" type="date" readonly></div>
-        <div><label>업체명</label><input id="f-업체명"></div>
+      <div class="zone zone-staff">
+        <div class="zone-tag">🧾 직원 입력</div>
+        <div class="row3">
+          <div><label>판매처</label><input id="f-판매처" readonly></div>
+          <div><label>주문일</label><input id="f-주문일" type="date" readonly></div>
+          <div><label>업체명</label><input id="f-업체명"></div>
+        </div>
+        <label>상품명</label>
+        <select id="f-상품명"></select>
+        <label>컬러 선택</label>
+        <input type="hidden" id="f-옵션">
+        <div id="f-옵션-grid" class="swatch-grid"></div>
+        <div class="row2">
+          <div><label>수량</label><input id="f-수량" type="number" min="1" value="1"></div>
+          <div><label>주문금액</label><input id="f-주문금액" type="number" min="0"></div>
+        </div>
+        <div class="row2">
+          <div><label>우편번호</label><input id="f-우편번호"></div>
+          <div><label>배송희망일자</label><input id="f-배송희망일자" type="date"></div>
+        </div>
+        <label>배송메세지</label>
+        <textarea id="f-배송메세지" rows="2"></textarea>
       </div>
-      <label>상품명</label>
-      <select id="f-상품명"></select>
-      <label>컬러 선택</label>
-      <input type="hidden" id="f-옵션">
-      <div id="f-옵션-grid" class="swatch-grid"></div>
-      <div class="row2">
-        <div><label>수량</label><input id="f-수량" type="number" min="1" value="1"></div>
-        <div><label>주문금액</label><input id="f-주문금액" type="number" min="0"></div>
-      </div>
-      <div class="row2">
-        <div><label>우편번호</label><input id="f-우편번호"></div>
-        <div><label>배송희망일자</label><input id="f-배송희망일자" type="date"></div>
-      </div>
-      <label>배송메세지</label>
-      <textarea id="f-배송메세지" rows="2"></textarea>
 
       <div id="privacy-notice" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;margin-top:16px;font-size:12px;color:#444;line-height:1.6;">
         <strong>개인정보 수집·이용 동의</strong><br>
