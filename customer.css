@@ -11,7 +11,8 @@ header {
   display: block;
   text-align: center;
 }
-header .logo { height: 26px; display: block; margin: 0 auto 6px; }
+header .logo { height: 26px; display: block; margin: 0 auto 10px; }
+header .expo-name { font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
 header .tagline { font-size: 13px; letter-spacing: 0.08em; color: #8a8578; text-transform: uppercase; }
 
 #staff-corner {

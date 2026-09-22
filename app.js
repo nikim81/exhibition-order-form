@@ -50,7 +50,7 @@ function resetForm() {
   $("form-title").textContent = "주문 입력";
   $("submit-btn").textContent = "주문 저장";
   $("cancel-edit-btn").classList.add("hidden");
-  $("f-판매처").value = settings.박람회명 || "박람회";
+  $("expo-name").textContent = settings.박람회명 || "박람회";
   $("f-주문일").value = today();
   $("f-업체명").value = "";
   fillProductSelect();
@@ -128,7 +128,7 @@ function startEdit(order) {
   $("form-title").textContent = "주문 수정";
   $("submit-btn").textContent = "수정 저장";
   $("cancel-edit-btn").classList.remove("hidden");
-  $("f-판매처").value = order.판매처 || "";
+  $("expo-name").textContent = order.판매처 || settings.박람회명 || "박람회";
   $("f-주문일").value = order.주문일 || "";
   $("f-상품명").value = order.상품명 || "";
   const opts = activeProducts.filter(p => p.name === $("f-상품명").value);
