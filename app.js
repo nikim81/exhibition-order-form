@@ -131,7 +131,10 @@ async function deleteOrder(id) {
   await loadOrders();
 }
 
+let adminUnlocked = false;
+
 async function loadOrders() {
+  if (!adminUnlocked) return;
   const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false });
   if (error) { console.error(error); return; }
   orders = data;
@@ -159,6 +162,17 @@ function renderTable() {
 }
 
 $("refresh-btn").addEventListener("click", loadOrders);
+
+$("admin-btn").addEventListener("click", () => {
+  if (adminUnlocked) return;
+  const pw = prompt("관리자 비밀번호를 입력하세요");
+  if (pw === null) return;
+  if (pw !== "1114") { alert("비밀번호가 틀렸습니다."); return; }
+  adminUnlocked = true;
+  $("admin-gate").classList.add("hidden");
+  $("orders-section").classList.remove("hidden");
+  loadOrders();
+});
 
 $("export-btn").addEventListener("click", () => {
   const rows = orders.map(o => COLUMNS.map(c => o[c] ?? ""));
@@ -191,9 +205,11 @@ sb.auth.onAuthStateChange((_event, session) => {
     $("app").classList.remove("hidden");
     $("whoami").textContent = session.user.email;
     resetForm();
-    loadOrders();
   } else {
     $("app").classList.add("hidden");
     $("login-card").classList.remove("hidden");
+    adminUnlocked = false;
+    $("admin-gate").classList.remove("hidden");
+    $("orders-section").classList.add("hidden");
   }
 });
