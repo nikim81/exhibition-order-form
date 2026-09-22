@@ -1,12 +1,5 @@
-const SUPABASE_URL = "https://vprrojsdepyejacawqew.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_kyKuvP9RRYKJaCH7mg_bGQ_skGfgjpB";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-const COLUMNS = ["판매처","주문번호","주문일","상품명","상품코드","옵션명","수량","주문금액","업체명","수취인","연락처","우편번호","주소","배송희망일자","배송메세지"];
-
 const $ = (id) => document.getElementById(id);
 let editingId = null;
-let orders = [];
 
 // ---- product dropdowns ----
 const productNames = [...new Set(PRODUCTS.map(p => p.name))];
@@ -88,6 +81,7 @@ $("submit-btn").addEventListener("click", async () => {
   if (editingId) {
     const { error } = await sb.from("orders").update(data).eq("id", editingId);
     if (error) return $("err").textContent = error.message;
+    history.replaceState(null, "", "index.html");
   } else {
     data.주문번호 = genOrderNo();
     const { data: { user } } = await sb.auth.getUser();
@@ -96,10 +90,12 @@ $("submit-btn").addEventListener("click", async () => {
     if (error) return $("err").textContent = error.message;
   }
   resetForm();
-  await loadOrders();
 });
 
-$("cancel-edit-btn").addEventListener("click", resetForm);
+$("cancel-edit-btn").addEventListener("click", () => {
+  resetForm();
+  history.replaceState(null, "", "index.html");
+});
 
 function startEdit(order) {
   editingId = order.id;
@@ -124,68 +120,12 @@ function startEdit(order) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-async function deleteOrder(id) {
-  if (!confirm("이 주문을 삭제할까요?")) return;
-  const { error } = await sb.from("orders").delete().eq("id", id);
-  if (error) alert(error.message);
-  await loadOrders();
+async function loadEditFromUrl() {
+  const id = new URLSearchParams(location.search).get("edit");
+  if (!id) return;
+  const { data, error } = await sb.from("orders").select("*").eq("id", id).single();
+  if (!error && data) startEdit(data);
 }
-
-let adminUnlocked = false;
-
-async function loadOrders() {
-  if (!adminUnlocked) return;
-  const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false });
-  if (error) { console.error(error); return; }
-  orders = data;
-  renderTable();
-}
-
-function renderTable() {
-  $("count-badge").textContent = `(${orders.length}건)`;
-  $("tbody").innerHTML = orders.map(o => `
-    <tr>
-      <td>${o.판매처 ?? ""}</td><td>${o.주문번호 ?? ""}</td><td>${o.주문일 ?? ""}</td>
-      <td>${o.상품명 ?? ""}</td><td>${o.상품코드 ?? ""}</td><td>${o.옵션명 ?? ""}</td>
-      <td>${o.수량 ?? ""}</td><td>${o.주문금액 ?? ""}</td><td>${o.업체명 ?? ""}</td>
-      <td>${o.수취인 ?? ""}</td><td>${o.연락처 ?? ""}</td><td>${o.우편번호 ?? ""}</td>
-      <td>${o.주소 ?? ""}</td><td>${o.배송희망일자 ?? ""}</td><td>${o.배송메세지 ?? ""}</td>
-      <td class="actions">
-        <button data-edit="${o.id}">수정</button>
-        <button data-del="${o.id}">삭제</button>
-      </td>
-    </tr>`).join("");
-  $("tbody").querySelectorAll("[data-edit]").forEach(b =>
-    b.addEventListener("click", () => startEdit(orders.find(o => o.id === b.dataset.edit))));
-  $("tbody").querySelectorAll("[data-del]").forEach(b =>
-    b.addEventListener("click", () => deleteOrder(b.dataset.del)));
-}
-
-$("refresh-btn").addEventListener("click", loadOrders);
-
-$("admin-btn").addEventListener("click", () => {
-  if (adminUnlocked) return;
-  const pw = prompt("관리자 비밀번호를 입력하세요");
-  if (pw === null) return;
-  if (pw !== "1114") { alert("비밀번호가 틀렸습니다."); return; }
-  adminUnlocked = true;
-  $("admin-gate").classList.add("hidden");
-  $("orders-section").classList.remove("hidden");
-  loadOrders();
-});
-
-$("export-btn").addEventListener("click", () => {
-  const rows = orders.map(o => COLUMNS.map(c => o[c] ?? ""));
-  const ws = XLSX.utils.aoa_to_sheet([COLUMNS, ...rows]);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  XLSX.writeFile(wb, `사방넷_출고요청서_${today()}.xlsx`);
-});
-
-// realtime: pick up orders entered from other devices
-sb.channel("orders-changes")
-  .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, loadOrders)
-  .subscribe();
 
 // ---- auth ----
 $("login-btn").addEventListener("click", async () => {
@@ -205,11 +145,9 @@ sb.auth.onAuthStateChange((_event, session) => {
     $("app").classList.remove("hidden");
     $("whoami").textContent = session.user.email;
     resetForm();
+    loadEditFromUrl();
   } else {
     $("app").classList.add("hidden");
     $("login-card").classList.remove("hidden");
-    adminUnlocked = false;
-    $("admin-gate").classList.remove("hidden");
-    $("orders-section").classList.add("hidden");
   }
 });
