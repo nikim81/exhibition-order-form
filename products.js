@@ -8,7 +8,7 @@ const PRODUCTS = [
   { name: "시그니처2플러스", code: "920030", option: "라이트그레이", image: "images/920030-lightgray.png" },
   { name: "시그니처2플러스", code: "920032", option: "베이비핑크", image: "images/920032-babypink.png" },
   { name: "시그니처2플러스", code: "920033", option: "베이비블루", image: "images/920033-babyblue.png" },
-  { name: "시그니처2플러스", code: "920034", option: "블랙", image: "images/black-placeholder.png" },
+  { name: "시그니처2플러스", code: "920034", option: "블랙", image: "images/920034-black.png" },
   { name: "시그니처2+ACC3종(세로,수납,다용도)", code: "100172", option: "밀크화이트+ACC3종" },
   { name: "시그니처2+ACC3종(세로,수납,다용도)", code: "100172", option: "바닐라크림+ACC3종" },
   { name: "시그니처2+ACC3종(세로,수납,다용도)", code: "100172", option: "라이트그레이+ACC3종" },
