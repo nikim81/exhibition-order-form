@@ -146,6 +146,14 @@ async function loadSettings() {
   activeProducts = (data.판매제품 && data.판매제품.length) ? data.판매제품 : PRODUCTS;
 }
 
+$("f-연락처").addEventListener("input", () => {
+  const digits = $("f-연락처").value.replace(/\D/g, "").slice(0, 11);
+  let formatted = digits;
+  if (digits.length > 3 && digits.length <= 7) formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  else if (digits.length > 7) formatted = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  $("f-연락처").value = formatted;
+});
+
 function closeAddrModal() {
   $("addr-modal").classList.add("hidden");
   $("addr-embed").innerHTML = "";
