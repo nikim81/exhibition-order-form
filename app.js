@@ -5,7 +5,15 @@ let settings = { 박람회명: "박람회", 판매제품: [] };
 let activeProducts = PRODUCTS;
 let cart = new Map(); // key = `${code}|||${option}` -> {name, code, option, price, qty}
 
-function sterilizerProducts() { return activeProducts.filter(p => p.name === "시그니처2플러스"); }
+const TIER_NAME = {
+  "단품": "시그니처2플러스",
+  "3종": "시그니처2플러스+ACC3종(세로,수납,다용도)",
+  "4종": "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)",
+};
+let currentTier = "단품";
+let currentColorKey = null;
+
+function tierProducts() { return activeProducts.filter(p => p.name === TIER_NAME[currentTier]); }
 function accProducts() { return activeProducts.filter(p => p.name === "ACC"); }
 
 function priceFor(code, option) {
@@ -13,7 +21,64 @@ function priceFor(code, option) {
   return p && p.price != null ? Number(p.price) : null;
 }
 
-// ---- product pickers (multi-select cart) ----
+// ---- 1단: 소독기 (단품/3종/4종 탭 + 단일 컬러 선택 후 "담기") ----
+function renderTierTabs() {
+  $("tier-tabs").querySelectorAll(".tier-btn").forEach(b => b.classList.toggle("active", b.dataset.tier === currentTier));
+}
+$("tier-tabs").querySelectorAll(".tier-btn").forEach(b => {
+  b.addEventListener("click", () => {
+    currentTier = b.dataset.tier;
+    currentColorKey = null;
+    renderTierTabs();
+    renderSterilizerGrid();
+    renderAccAvailability();
+  });
+});
+
+function renderSterilizerGrid() {
+  const grid = $("sterilizer-grid");
+  const products = tierProducts();
+  grid.innerHTML = products.map(p => {
+    const key = `${p.code}|||${p.option}`;
+    const master = PRODUCTS.find(x => x.code === p.code && x.option === p.option) || p;
+    const img = master.image
+      ? `<img src="${master.image}" alt="${p.option}">`
+      : `<div style="aspect-ratio:4/5;border-radius:6px;background:#ddd;"></div>`;
+    return `<div class="swatch${key === currentColorKey ? " selected" : ""}" data-key="${key}">${img}<span>${p.option}</span></div>`;
+  }).join("");
+  grid.querySelectorAll(".swatch").forEach(el => {
+    el.addEventListener("click", () => {
+      currentColorKey = currentColorKey === el.dataset.key ? null : el.dataset.key;
+      renderSterilizerGrid();
+    });
+  });
+}
+
+function renderAccAvailability() {
+  const enabled = currentTier === "단품";
+  $("acc-grid").classList.toggle("disabled", !enabled);
+  $("acc-label").textContent = enabled
+    ? "2단. 액세서리 (선택 안 해도 됨)"
+    : "2단. 액세서리 (3종/4종에 이미 포함되어 있어요)";
+}
+
+$("steril-add-btn").addEventListener("click", () => {
+  if (!currentColorKey) { $("err").textContent = "소독기 컬러를 선택하세요."; return; }
+  $("err").textContent = "";
+  const [code, option] = currentColorKey.split("|||");
+  const p = tierProducts().find(x => x.code === code && x.option === option);
+  const qty = Number($("steril-qty").value) || 1;
+  if (editMode) cart.clear();
+  const existing = cart.get(currentColorKey);
+  if (existing) existing.qty += qty;
+  else cart.set(currentColorKey, { name: p.name, code, option, price: priceFor(code, option), qty });
+  currentColorKey = null;
+  $("steril-qty").value = 1;
+  renderSterilizerGrid();
+  renderCart();
+});
+
+// ---- 2단: 액세서리 (다중 선택 가능, 토글식 장바구니) ----
 function renderPicker(containerId, products) {
   const grid = $(containerId);
   grid.innerHTML = products.map(p => {
@@ -66,7 +131,9 @@ function renderCart() {
 }
 
 function renderAll() {
-  renderPicker("sterilizer-grid", sterilizerProducts());
+  renderTierTabs();
+  renderSterilizerGrid();
+  renderAccAvailability();
   renderPicker("acc-grid", accProducts());
   renderCart();
 }
@@ -110,6 +177,8 @@ function resetForm() {
   $("expo-name").textContent = settings.박람회명 || "박람회";
   $("f-주문일").value = today();
   cart.clear();
+  currentTier = "단품";
+  currentColorKey = null;
   renderAll();
   $("f-수취인").value = "";
   $("f-연락처").value = "";
@@ -204,6 +273,9 @@ function startEdit(order) {
     name: order.상품명, code: order.상품코드, option: order.옵션명, qty,
     price: order.주문금액 != null ? order.주문금액 / qty : priceFor(order.상품코드, order.옵션명),
   });
+  const matchedTier = Object.keys(TIER_NAME).find(t => TIER_NAME[t] === order.상품명);
+  currentTier = matchedTier || "단품";
+  currentColorKey = matchedTier ? `${order.상품코드}|||${order.옵션명}` : null;
   renderAll();
 
   $("f-수취인").value = order.수취인 || "";

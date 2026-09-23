@@ -76,10 +76,19 @@
         <div class="zone-tag">🧾 직원 입력</div>
         <label>주문일</label>
         <input id="f-주문일" type="date" readonly>
-        <label>젖병소독기 (컬러, 중복 선택 가능)</label>
+        <label>1단. 젖병소독기</label>
+        <div id="tier-tabs" class="tier-tabs">
+          <button type="button" class="tier-btn" data-tier="단품">단품</button>
+          <button type="button" class="tier-btn" data-tier="3종">3종(세로+수납+다용도 포함)</button>
+          <button type="button" class="tier-btn" data-tier="4종">4종(+멀티선반 포함)</button>
+        </div>
         <div id="sterilizer-grid" class="swatch-grid"></div>
+        <div class="row2" style="align-items:end;">
+          <div><label>수량</label><input id="steril-qty" type="number" min="1" value="1"></div>
+          <button type="button" class="primary" id="steril-add-btn" style="margin-top:0;">+ 담기</button>
+        </div>
 
-        <label style="margin-top:16px;">액세서리 (중복 선택 가능)</label>
+        <label style="margin-top:16px;" id="acc-label">2단. 액세서리 (선택 안 해도 됨, 단품 선택 시에만 담을 수 있어요)</label>
         <div id="acc-grid" class="swatch-grid"></div>
 
         <label style="margin-top:16px;">선택한 상품</label>
