@@ -109,13 +109,11 @@ function resetForm() {
   $("cancel-edit-btn").classList.add("hidden");
   $("expo-name").textContent = settings.박람회명 || "박람회";
   $("f-주문일").value = today();
-  $("f-업체명").value = "";
   cart.clear();
   renderAll();
   $("f-수취인").value = "";
   $("f-연락처").value = "";
   $("f-우편번호").value = "";
-  $("f-배송희망일자").value = "";
   $("f-주소").value = "";
   $("f-상세주소").value = "";
   $("f-배송메세지").value = "";
@@ -133,12 +131,12 @@ function commonFields() {
   return {
     판매처: settings.박람회명 || "박람회",
     주문일: today(),
-    업체명: $("f-업체명").value.trim(),
+    업체명: "",
     수취인: $("f-수취인").value.trim(),
     연락처: $("f-연락처").value.trim(),
     우편번호: $("f-우편번호").value.trim(),
     주소: `${$("f-주소").value.trim()} ${$("f-상세주소").value.trim()}`.trim(),
-    배송희망일자: $("f-배송희망일자").value,
+    배송희망일자: null,
     배송메세지: $("f-배송메세지").value.trim(),
     개인정보동의: $("f-동의").checked,
   };
@@ -208,11 +206,9 @@ function startEdit(order) {
   });
   renderAll();
 
-  $("f-업체명").value = order.업체명 || "";
   $("f-수취인").value = order.수취인 || "";
   $("f-연락처").value = order.연락처 || "";
   $("f-우편번호").value = order.우편번호 || "";
-  $("f-배송희망일자").value = order.배송희망일자 || "";
   $("f-주소").value = order.주소 || "";
   $("f-상세주소").value = "";
   $("f-배송메세지").value = order.배송메세지 || "";

@@ -56,16 +56,26 @@
           <button type="button" class="ghost" id="addr-search-btn">🔍 주소 검색</button>
         </div>
         <input id="f-상세주소" placeholder="상세주소 (동/호수 등)" style="margin-top:8px;">
+
+        <div id="privacy-notice" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;margin-top:16px;font-size:12px;color:#444;line-height:1.6;">
+          <strong>개인정보 수집·이용 동의</strong><br>
+          · 수집 항목: 수취인명, 연락처, 우편번호, 주소, 배송메세지<br>
+          · 수집 목적: 박람회 현장 주문 접수 및 상품 배송<br>
+          · 보유 기간: 배송 완료 후 3개월 (관계 법령에 따라 보관 의무가 있는 경우 해당 기간까지)<br>
+          · 동의를 거부할 권리가 있으며, 거부 시 주문 접수가 제한될 수 있습니다.
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:8px;">
+          <input type="checkbox" id="f-동의" style="width:auto;">
+          위 개인정보 수집·이용에 동의합니다 *
+        </label>
       </div>
 
       <div class="tear-line"><span>✂ 여기까지 작성</span></div>
 
       <div class="zone zone-staff">
         <div class="zone-tag">🧾 직원 입력</div>
-        <div class="row2">
-          <div><label>주문일</label><input id="f-주문일" type="date" readonly></div>
-          <div><label>업체명</label><input id="f-업체명"></div>
-        </div>
+        <label>주문일</label>
+        <input id="f-주문일" type="date" readonly>
         <label>젖병소독기 (컬러, 중복 선택 가능)</label>
         <div id="sterilizer-grid" class="swatch-grid"></div>
 
@@ -76,23 +86,9 @@
         <div id="cart-list"></div>
         <div id="cart-total"></div>
 
-        <label>배송희망일자</label>
-        <input id="f-배송희망일자" type="date">
         <label>배송메세지</label>
         <textarea id="f-배송메세지" rows="2"></textarea>
       </div>
-
-      <div id="privacy-notice" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;margin-top:16px;font-size:12px;color:#444;line-height:1.6;">
-        <strong>개인정보 수집·이용 동의</strong><br>
-        · 수집 항목: 수취인명, 연락처, 우편번호, 주소, 배송희망일자, 배송메세지<br>
-        · 수집 목적: 박람회 현장 주문 접수 및 상품 배송<br>
-        · 보유 기간: 배송 완료 후 3개월 (관계 법령에 따라 보관 의무가 있는 경우 해당 기간까지)<br>
-        · 동의를 거부할 권리가 있으며, 거부 시 주문 접수가 제한될 수 있습니다.
-      </div>
-      <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:8px;">
-        <input type="checkbox" id="f-동의" style="width:auto;">
-        위 개인정보 수집·이용에 동의합니다 *
-      </label>
 
       <div id="err"></div>
       <button class="primary" id="submit-btn">주문 저장</button>
