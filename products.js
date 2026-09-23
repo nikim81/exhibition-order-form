@@ -11,11 +11,13 @@ const PRODUCTS = [
   { name: "시그니처2플러스+ACC3종(세로,수납,다용도)", code: "100172", option: "라이트그레이+ACC3종" },
   { name: "시그니처2플러스+ACC3종(세로,수납,다용도)", code: "100172", option: "베이비핑크+ACC3종" },
   { name: "시그니처2플러스+ACC3종(세로,수납,다용도)", code: "100172", option: "베이비블루+ACC3종" },
+  { name: "시그니처2플러스+ACC3종(세로,수납,다용도)", code: "100172", option: "블랙+ACC3종" }, // TODO: 임의 코드, 사방넷 실제 코드로 교체 필요
   { name: "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)", code: "100173", option: "밀크화이트+ACC4종" }, // TODO: 임의 코드, 사방넷 실제 코드로 교체 필요
   { name: "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)", code: "100173", option: "바닐라크림+ACC4종" },
   { name: "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)", code: "100173", option: "라이트그레이+ACC4종" },
   { name: "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)", code: "100173", option: "베이비핑크+ACC4종" },
   { name: "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)", code: "100173", option: "베이비블루+ACC4종" },
+  { name: "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)", code: "100173", option: "블랙+ACC4종" },
   { name: "ACC", code: "900019", option: "세로형거치대", image: "images/세로형거치대.png" },
   { name: "ACC", code: "900018", option: "수납형거치대", image: "images/수납현거치대.png" },
   { name: "ACC", code: "900022", option: "멀티거치대 2종세트" },
