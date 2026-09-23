@@ -10,7 +10,8 @@ const productLabel = (p) => `${p.name} - ${p.option} (${p.code})`;
 
 function fillProductSelects() {
   const optionsHtml = PRODUCTS.map(p => `<option value="${key(p)}">${productLabel(p)}</option>`).join("");
-  $("gift-product").innerHTML = optionsHtml;
+  $("gift-product").innerHTML = PRODUCTS.filter(p => p.name.startsWith("[사은품]"))
+    .map(p => `<option value="${key(p)}">${productLabel(p)}</option>`).join("");
   $("bundle-base").innerHTML = optionsHtml;
   $("bundle-part-product").innerHTML = optionsHtml;
 }
@@ -180,7 +181,7 @@ function renderProductGroups() {
 function renderGiftList() {
   $("gift-list").innerHTML = state.사은품.map((g, i) => `
     <div class="pill">
-      <span>${g.name} - ${g.option} (${g.code}) · ${g.전달방식}</span>
+      <span>${g.name} - ${g.option} (${g.code})</span>
       <button data-i="${i}">삭제</button>
     </div>`).join("") || `<div style="color:#999;font-size:13px;">등록된 사은품 없음</div>`;
   $("gift-list").querySelectorAll("button").forEach(b =>
@@ -190,7 +191,8 @@ function renderGiftList() {
 $("gift-add-btn").addEventListener("click", () => {
   const [code, option] = $("gift-product").value.split("|||");
   const p = PRODUCTS.find(x => x.code === code && x.option === option);
-  state.사은품.push({ ...p, 전달방식: $("gift-type").value });
+  if (state.사은품.some(g => g.code === code && g.option === option)) return;
+  state.사은품.push({ name: p.name, code: p.code, option: p.option });
   renderGiftList();
 });
 

@@ -12,6 +12,9 @@ const TIER_NAME = {
 };
 let currentTier = "단품";
 let currentColorKey = null;
+let currentGiftKey = null; // code|||option of the selected gift (no delivery suffix)
+let currentGiftCartKey = null; // actual key this gift is stored under in `cart`
+let giftDelivery = "현장"; // "현장" | "배송"
 
 function tierProducts() { return activeProducts.filter(p => p.name === TIER_NAME[currentTier]); }
 function accProducts() { return activeProducts.filter(p => p.name === "ACC"); }
@@ -58,8 +61,8 @@ function renderAccAvailability() {
   const enabled = currentTier === "단품";
   $("acc-grid").classList.toggle("disabled", !enabled);
   $("acc-label").textContent = enabled
-    ? "2단. 액세서리 (선택 안 해도 됨)"
-    : "2단. 액세서리 (3종/4종에 이미 포함되어 있어요)";
+    ? "선택2. 액세서리 (별도 구매 시, 선택 안 해도 됨)"
+    : "선택2. 액세서리 (3종/4종에 이미 포함되어 있어요)";
 }
 
 $("steril-add-btn").addEventListener("click", () => {
@@ -117,6 +120,65 @@ function renderPicker(containerId, products) {
   });
 }
 
+// ---- 3단: 사은품 (박람회별 세팅된 제품만, 단일 선택 + 현장수령/배송) ----
+function giftProducts() {
+  return (settings.사은품 || []).map(g => PRODUCTS.find(x => x.code === g.code && x.option === g.option) || g);
+}
+
+function addGiftToCart() {
+  const [code, option] = currentGiftKey.split("|||");
+  const p = giftProducts().find(x => x.code === code && x.option === option);
+  if (!p) return;
+  const isDelivery = giftDelivery === "배송";
+  const cartKey = isDelivery ? `${currentGiftKey}|||배송` : currentGiftKey;
+  if (currentGiftCartKey && currentGiftCartKey !== cartKey) cart.delete(currentGiftCartKey);
+  cart.set(cartKey, {
+    name: isDelivery ? `${p.name}(배송)` : p.name,
+    code: isDelivery ? `${p.code}-배송` : p.code, // TODO: 배송 사은품 실제 사방넷 코드로 교체 필요
+    option: isDelivery ? `${p.option}(배송)` : p.option,
+    price: isDelivery ? 2500 : null,
+    qty: 1,
+  });
+  currentGiftCartKey = cartKey;
+}
+
+function renderGiftSection() {
+  const grid = $("gift-grid");
+  const products = giftProducts();
+  grid.innerHTML = products.map(p => {
+    const key = `${p.code}|||${p.option}`;
+    const master = PRODUCTS.find(x => x.code === p.code && x.image) || p;
+    const img = master.image
+      ? `<img src="${master.image}" alt="${p.option}">`
+      : `<div style="aspect-ratio:4/5;border-radius:6px;background:#ddd;"></div>`;
+    return `<div class="swatch${key === currentGiftKey ? " selected" : ""}" data-key="${key}">${img}<span>${p.option}</span></div>`;
+  }).join("");
+  grid.querySelectorAll(".swatch").forEach(el => {
+    el.addEventListener("click", () => {
+      const key = el.dataset.key;
+      if (currentGiftCartKey) { cart.delete(currentGiftCartKey); currentGiftCartKey = null; }
+      if (key === currentGiftKey) {
+        currentGiftKey = null;
+      } else {
+        currentGiftKey = key;
+        addGiftToCart();
+      }
+      renderAll();
+    });
+  });
+  $("gift-delivery-row").classList.toggle("hidden", !currentGiftKey);
+  $("gift-delivery").querySelectorAll("input[name=gift-delivery]").forEach(r => r.checked = r.value === giftDelivery);
+  $("gift-warning").classList.toggle("hidden", !(currentGiftKey && giftDelivery === "배송"));
+}
+
+$("gift-delivery").addEventListener("change", (e) => {
+  if (e.target.name !== "gift-delivery") return;
+  giftDelivery = e.target.value;
+  if (currentGiftKey) addGiftToCart();
+  renderGiftSection();
+  renderCart();
+});
+
 function renderCart() {
   const items = [...cart.values()];
   $("cart-list").innerHTML = items.length ? items.map(it => `
@@ -135,6 +197,7 @@ function renderAll() {
   renderSterilizerGrid();
   renderAccAvailability();
   renderPicker("acc-grid", accProducts());
+  renderGiftSection();
   renderCart();
 }
 renderAll();
@@ -187,6 +250,9 @@ function resetForm() {
   cart.clear();
   currentTier = "단품";
   currentColorKey = null;
+  currentGiftKey = null;
+  currentGiftCartKey = null;
+  giftDelivery = "현장";
   renderAll();
   $("f-수취인").value = "";
   $("f-연락처").value = "";
@@ -284,6 +350,9 @@ function startEdit(order) {
   const matchedTier = Object.keys(TIER_NAME).find(t => TIER_NAME[t] === order.상품명);
   currentTier = matchedTier || "단품";
   currentColorKey = matchedTier ? `${order.상품코드}|||${order.옵션명}` : null;
+  currentGiftKey = null;
+  currentGiftCartKey = null;
+  giftDelivery = "현장";
   renderAll();
 
   $("f-수취인").value = order.수취인 || "";

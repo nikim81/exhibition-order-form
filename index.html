@@ -76,7 +76,7 @@
         <div class="zone-tag">🧾 직원 입력</div>
         <label>주문일</label>
         <input id="f-주문일" type="date" readonly>
-        <label>1단. 젖병소독기</label>
+        <label>선택1. 젖병소독기</label>
         <div id="tier-tabs" class="tier-tabs">
           <button type="button" class="tier-btn" data-tier="단품">단품</button>
           <button type="button" class="tier-btn" data-tier="3종">3종(세로+수납+다용도 포함)</button>
@@ -88,8 +88,18 @@
           <button type="button" class="primary" id="steril-add-btn" style="margin-top:0;">+ 담기</button>
         </div>
 
-        <label style="margin-top:16px;" id="acc-label">2단. 액세서리 (선택 안 해도 됨, 단품 선택 시에만 담을 수 있어요)</label>
+        <label style="margin-top:16px;" id="acc-label">선택2. 액세서리 (별도 구매 시, 선택 안 해도 됨)</label>
         <div id="acc-grid" class="swatch-grid"></div>
+
+        <label style="margin-top:16px;">선택3. 사은품 (선택 안 해도 됨)</label>
+        <div id="gift-grid" class="swatch-grid"></div>
+        <div id="gift-delivery-row" class="hidden" style="margin-top:8px;">
+          <label id="gift-delivery" style="display:flex;gap:16px;align-items:center;font-weight:400;">
+            <span style="display:flex;align-items:center;gap:4px;"><input type="radio" name="gift-delivery" value="현장" style="width:auto;"> 현장수령</span>
+            <span style="display:flex;align-items:center;gap:4px;"><input type="radio" name="gift-delivery" value="배송" style="width:auto;"> 배송</span>
+          </label>
+          <div id="gift-warning" class="hidden" style="color:#dc2626;font-size:12px;margin-top:4px;">⚠ 배송 선택 시 배송비 2,500원이 추가로 결제됩니다.</div>
+        </div>
 
         <label style="margin-top:16px;">선택한 상품</label>
         <div id="cart-list"></div>
