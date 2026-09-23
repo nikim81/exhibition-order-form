@@ -106,11 +106,12 @@ function renderProductGroups() {
         </div>
         ${opts.map(o => {
           const sp = state.판매제품.find(x => x.code === o.code && x.option === o.option);
+          const isGift = name.startsWith("[사은품]");
           return `
           <div class="opt-row">
             <input type="checkbox" class="opt-check" data-code="${o.code}" data-option="${o.option}" ${sp ? "checked" : ""}>
             <span>${o.option} (${o.code})</span>
-            ${sp ? `<input type="number" min="0" class="price-input" placeholder="가격" data-code="${o.code}" data-option="${o.option}" value="${sp.price ?? ""}">` : ""}
+            ${sp && !isGift ? `<input type="number" min="0" class="price-input" placeholder="가격" data-code="${o.code}" data-option="${o.option}" value="${sp.price ?? ""}">` : ""}
           </div>`;
         }).join("")}
       </div>`;
