@@ -1,43 +1,83 @@
 const $ = (id) => document.getElementById(id);
 let editingId = null;
+let editMode = false;
 let settings = { 박람회명: "박람회", 판매제품: [] };
 let activeProducts = PRODUCTS;
+let cart = new Map(); // key = `${code}|||${option}` -> {name, code, option, price, qty}
 
-// ---- product dropdowns ----
-function fillProductSelect() {
-  const names = [...new Set(activeProducts.map(p => p.name))];
-  $("f-상품명").innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join("");
-  fillOptionSelect();
+function sterilizerProducts() { return activeProducts.filter(p => p.name === "시그니처2플러스"); }
+function accProducts() { return activeProducts.filter(p => p.name === "ACC"); }
+
+function priceFor(code, option) {
+  const p = activeProducts.find(x => x.code === code && x.option === option);
+  return p && p.price != null ? Number(p.price) : null;
 }
-function fillOptionSelect() {
-  const name = $("f-상품명").value;
-  const opts = activeProducts.filter(p => p.name === name);
-  $("f-옵션").value = opts.length ? `${opts[0].code}|||${opts[0].option}` : "";
-  renderSwatchGrid(opts, $("f-옵션").value);
-  applyPrice();
-}
-function renderSwatchGrid(opts, selectedValue) {
-  const grid = $("f-옵션-grid");
-  grid.innerHTML = opts.map(o => {
-    const val = `${o.code}|||${o.option}`;
-    const master = PRODUCTS.find(p => p.code === o.code && p.option === o.option) || o;
+
+// ---- product pickers (multi-select cart) ----
+function renderPicker(containerId, products) {
+  const grid = $(containerId);
+  grid.innerHTML = products.map(p => {
+    const key = `${p.code}|||${p.option}`;
+    const item = cart.get(key);
+    const master = PRODUCTS.find(x => x.code === p.code && x.option === p.option) || p;
     const img = master.image
-      ? `<img src="${master.image}" alt="${o.option}">`
+      ? `<img src="${master.image}" alt="${p.option}">`
       : `<div style="aspect-ratio:4/5;border-radius:6px;background:#ddd;"></div>`;
-    return `<div class="swatch${val === selectedValue ? " selected" : ""}" data-value="${val}">${img}<span>${o.option}</span></div>`;
+    const qtyRow = item
+      ? `<div class="qty-row"><button type="button" data-act="dec" data-key="${key}">−</button><span>${item.qty}</span><button type="button" data-act="inc" data-key="${key}">+</button></div>`
+      : "";
+    return `<div class="swatch${item ? " selected" : ""}" data-key="${key}" data-code="${p.code}" data-option="${p.option}" data-name="${p.name}">${img}<span>${p.option}</span>${qtyRow}</div>`;
   }).join("");
+
   grid.querySelectorAll(".swatch").forEach(el => {
-    el.addEventListener("click", () => {
-      $("f-옵션").value = el.dataset.value;
-      grid.querySelectorAll(".swatch").forEach(s => s.classList.remove("selected"));
-      el.classList.add("selected");
-      applyPrice();
+    el.addEventListener("click", (e) => {
+      const key = el.dataset.key;
+      const actBtn = e.target.closest("[data-act]");
+      if (actBtn) {
+        const item = cart.get(key);
+        if (!item) return;
+        if (actBtn.dataset.act === "inc") item.qty++;
+        else { item.qty--; if (item.qty <= 0) cart.delete(key); }
+      } else if (cart.has(key)) {
+        cart.delete(key);
+      } else {
+        if (editMode) cart.clear();
+        cart.set(key, {
+          name: el.dataset.name, code: el.dataset.code, option: el.dataset.option,
+          price: priceFor(el.dataset.code, el.dataset.option), qty: 1,
+        });
+      }
+      renderAll();
     });
   });
 }
-$("f-상품명").addEventListener("change", fillOptionSelect);
-$("f-수량").addEventListener("input", applyPrice);
-fillProductSelect();
+
+function renderCart() {
+  const items = [...cart.values()];
+  $("cart-list").innerHTML = items.length ? items.map(it => `
+    <div class="cart-row">
+      <span>${it.name} - ${it.option} × ${it.qty}${it.price != null ? ` = ${(it.price * it.qty).toLocaleString()}원` : ""}</span>
+      <button type="button" data-remove="${it.code}|||${it.option}">삭제</button>
+    </div>`).join("") : `<div style="color:#999;font-size:13px;">선택된 상품이 없습니다</div>`;
+  $("cart-list").querySelectorAll("[data-remove]").forEach(b =>
+    b.addEventListener("click", () => { cart.delete(b.dataset.remove); renderAll(); }));
+  const total = items.reduce((s, it) => s + (it.price || 0) * it.qty, 0);
+  $("cart-total").textContent = items.length ? `합계: ${total.toLocaleString()}원` : "";
+}
+
+function renderAll() {
+  renderPicker("sterilizer-grid", sterilizerProducts());
+  renderPicker("acc-grid", accProducts());
+  renderCart();
+}
+renderAll();
+
+async function loadSettings() {
+  const { data, error } = await sb.from("exhibitions").select("*").eq("is_active", true).limit(1).single();
+  if (error || !data) return;
+  settings = data;
+  activeProducts = (data.판매제품 && data.판매제품.length) ? data.판매제품 : PRODUCTS;
+}
 
 function closeAddrModal() {
   $("addr-modal").classList.add("hidden");
@@ -59,42 +99,19 @@ $("addr-search-btn").addEventListener("click", () => {
 });
 $("addr-modal-close").addEventListener("click", closeAddrModal);
 
-async function loadSettings() {
-  const { data, error } = await sb.from("exhibitions").select("*").eq("is_active", true).limit(1).single();
-  if (error || !data) return;
-  settings = data;
-  activeProducts = (data.판매제품 && data.판매제품.length) ? data.판매제품 : PRODUCTS;
-}
-
-function priceFor(code, option) {
-  const p = activeProducts.find(x => x.code === code && x.option === option);
-  return p && p.price != null ? Number(p.price) : null;
-}
-
-function applyPrice() {
-  const val = $("f-옵션").value;
-  if (!val) return;
-  const [code, option] = val.split("|||");
-  const price = priceFor(code, option);
-  if (price != null) {
-    const qty = Number($("f-수량").value) || 1;
-    $("f-주문금액").value = price * qty;
-  }
-}
-
 // ---- default field values ----
 function today() { return new Date().toISOString().slice(0, 10); }
 function resetForm() {
   editingId = null;
+  editMode = false;
   $("form-title").textContent = "주문 입력";
   $("submit-btn").textContent = "주문 저장";
   $("cancel-edit-btn").classList.add("hidden");
   $("expo-name").textContent = settings.박람회명 || "박람회";
   $("f-주문일").value = today();
   $("f-업체명").value = "";
-  fillProductSelect();
-  $("f-수량").value = 1;
-  $("f-주문금액").value = "";
+  cart.clear();
+  renderAll();
   $("f-수취인").value = "";
   $("f-연락처").value = "";
   $("f-우편번호").value = "";
@@ -112,16 +129,10 @@ function genOrderNo() {
   return `EXPO${stamp}${Math.floor(Math.random()*9000+1000)}`;
 }
 
-function readForm() {
-  const [코드, 옵션] = $("f-옵션").value.split("|||");
+function commonFields() {
   return {
     판매처: settings.박람회명 || "박람회",
     주문일: today(),
-    상품명: $("f-상품명").value,
-    상품코드: 코드,
-    옵션명: 옵션,
-    수량: Number($("f-수량").value) || 1,
-    주문금액: $("f-주문금액").value ? Number($("f-주문금액").value) : null,
     업체명: $("f-업체명").value.trim(),
     수취인: $("f-수취인").value.trim(),
     연락처: $("f-연락처").value.trim(),
@@ -134,25 +145,42 @@ function readForm() {
 }
 
 $("submit-btn").addEventListener("click", async () => {
-  const data = readForm();
-  if (!data.수취인 || !data.연락처 || !$("f-주소").value.trim()) {
+  if (!$("f-수취인").value.trim() || !$("f-연락처").value.trim() || !$("f-주소").value.trim()) {
     $("err").textContent = "수취인, 연락처, 주소는 필수입니다.";
     return;
   }
-  if (!data.개인정보동의) {
+  if (!$("f-동의").checked) {
     $("err").textContent = "개인정보 수집·이용에 동의해야 주문을 저장할 수 있습니다.";
     return;
   }
+  if (cart.size === 0) {
+    $("err").textContent = "상품을 1개 이상 선택하세요.";
+    return;
+  }
   $("err").textContent = "";
+  const common = commonFields();
+
   if (editingId) {
-    const { error } = await sb.from("orders").update(data).eq("id", editingId);
+    const it = [...cart.values()][0];
+    const row = {
+      ...common,
+      상품명: it.name, 상품코드: it.code, 옵션명: it.option, 수량: it.qty,
+      주문금액: it.price != null ? it.price * it.qty : null,
+    };
+    const { error } = await sb.from("orders").update(row).eq("id", editingId);
     if (error) return $("err").textContent = error.message;
     history.replaceState(null, "", "index.html");
   } else {
-    data.주문번호 = genOrderNo();
+    const 주문번호 = genOrderNo();
     const { data: { user } } = await sb.auth.getUser();
-    data.created_by = user.id;
-    const { error } = await sb.from("orders").insert(data);
+    const rows = [...cart.values()].map(it => ({
+      ...common,
+      주문번호,
+      상품명: it.name, 상품코드: it.code, 옵션명: it.option, 수량: it.qty,
+      주문금액: it.price != null ? it.price * it.qty : null,
+      created_by: user.id,
+    }));
+    const { error } = await sb.from("orders").insert(rows);
     if (error) return $("err").textContent = error.message;
   }
   resetForm();
@@ -165,17 +193,21 @@ $("cancel-edit-btn").addEventListener("click", () => {
 
 function startEdit(order) {
   editingId = order.id;
+  editMode = true;
   $("form-title").textContent = "주문 수정";
   $("submit-btn").textContent = "수정 저장";
   $("cancel-edit-btn").classList.remove("hidden");
   $("expo-name").textContent = order.판매처 || settings.박람회명 || "박람회";
   $("f-주문일").value = order.주문일 || "";
-  $("f-상품명").value = order.상품명 || "";
-  const opts = activeProducts.filter(p => p.name === $("f-상품명").value);
-  $("f-옵션").value = `${order.상품코드}|||${order.옵션명}`;
-  renderSwatchGrid(opts, $("f-옵션").value);
-  $("f-수량").value = order.수량 || 1;
-  $("f-주문금액").value = order.주문금액 || "";
+
+  cart.clear();
+  const qty = order.수량 || 1;
+  cart.set(`${order.상품코드}|||${order.옵션명}`, {
+    name: order.상품명, code: order.상품코드, option: order.옵션명, qty,
+    price: order.주문금액 != null ? order.주문금액 / qty : priceFor(order.상품코드, order.옵션명),
+  });
+  renderAll();
+
   $("f-업체명").value = order.업체명 || "";
   $("f-수취인").value = order.수취인 || "";
   $("f-연락처").value = order.연락처 || "";

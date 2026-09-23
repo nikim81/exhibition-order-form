@@ -66,15 +66,16 @@
           <div><label>주문일</label><input id="f-주문일" type="date" readonly></div>
           <div><label>업체명</label><input id="f-업체명"></div>
         </div>
-        <label>상품명</label>
-        <select id="f-상품명"></select>
-        <label>컬러 선택</label>
-        <input type="hidden" id="f-옵션">
-        <div id="f-옵션-grid" class="swatch-grid"></div>
-        <div class="row2">
-          <div><label>수량</label><input id="f-수량" type="number" min="1" value="1"></div>
-          <div><label>주문금액</label><input id="f-주문금액" type="number" min="0"></div>
-        </div>
+        <label>젖병소독기 (컬러, 중복 선택 가능)</label>
+        <div id="sterilizer-grid" class="swatch-grid"></div>
+
+        <label style="margin-top:16px;">액세서리 (중복 선택 가능)</label>
+        <div id="acc-grid" class="swatch-grid"></div>
+
+        <label style="margin-top:16px;">선택한 상품</label>
+        <div id="cart-list"></div>
+        <div id="cart-total"></div>
+
         <label>배송희망일자</label>
         <input id="f-배송희망일자" type="date">
         <label>배송메세지</label>

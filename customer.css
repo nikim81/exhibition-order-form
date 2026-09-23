@@ -152,6 +152,14 @@ button.ghost { border-radius: 10px; }
 }
 #addr-embed { width: 100%; height: 100%; }
 
+.swatch .qty-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; }
+.swatch .qty-row button { width: 22px; height: 22px; line-height: 1; border-radius: 6px; border: 1px solid #e5e2d8; background: #fff; cursor: pointer; font-size: 13px; }
+.swatch .qty-row span { min-width: 16px; text-align: center; font-size: 13px; font-weight: 600; }
+#cart-list { margin-top: 8px; }
+.cart-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #fbfaf7; border: 1px solid #efece3; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+.cart-row button { border: none; background: none; color: #b04a4a; cursor: pointer; font-size: 13px; }
+#cart-total { text-align: right; font-weight: 700; font-size: 14px; margin-top: 6px; }
+
 .addr-row { display: flex; gap: 8px; }
 .addr-row input { flex: 1; }
 .addr-row input.zip-input { flex: 0 0 90px; }
