@@ -40,7 +40,7 @@ function renderSterilizerGrid() {
   const products = tierProducts();
   grid.innerHTML = products.map(p => {
     const key = `${p.code}|||${p.option}`;
-    const master = PRODUCTS.find(x => x.code === p.code && x.option === p.option) || p;
+    const master = PRODUCTS.find(x => x.code === p.code && x.image) || p;
     const img = master.image
       ? `<img src="${master.image}" alt="${p.option}">`
       : `<div style="aspect-ratio:4/5;border-radius:6px;background:#ddd;"></div>`;
@@ -84,7 +84,7 @@ function renderPicker(containerId, products) {
   grid.innerHTML = products.map(p => {
     const key = `${p.code}|||${p.option}`;
     const item = cart.get(key);
-    const master = PRODUCTS.find(x => x.code === p.code && x.option === p.option) || p;
+    const master = PRODUCTS.find(x => x.code === p.code && x.image) || p;
     const img = master.image
       ? `<img src="${master.image}" alt="${p.option}">`
       : `<div style="aspect-ratio:4/5;border-radius:6px;background:#ddd;"></div>`;
