@@ -61,6 +61,11 @@ $("search").addEventListener("input", renderTable);
 $("expo-filter").addEventListener("change", renderTable);
 $("refresh-btn").addEventListener("click", loadOrders);
 
+function isOnSiteGift(o) {
+  // 현장수령 사은품은 창고 출고 없이 그 자리에서 전달하므로 사방넷 집계에서 제외 (배송 선택 시에만 상품명에 "(배송)"이 붙음)
+  return (o.상품명 || "").startsWith("[사은품]") && !o.상품명.endsWith("(배송)");
+}
+
 function explodeOrder(o, bundleMap) {
   const bundle = bundleMap[`${o.상품코드}|||${o.옵션명}`];
   if (!bundle) return [o];
@@ -83,7 +88,7 @@ $("export-btn").addEventListener("click", async () => {
     (rows?.[0]?.묶음구성 || []).forEach(b => { bundleMap[b.코드옵션] = b; });
   }
 
-  const exploded = expoFiltered().flatMap(o => explodeOrder(o, bundleMap));
+  const exploded = expoFiltered().filter(o => !isOnSiteGift(o)).flatMap(o => explodeOrder(o, bundleMap));
   const rows = exploded.map(o => COLUMNS.map(c => o[c] ?? ""));
   const ws = XLSX.utils.aoa_to_sheet([COLUMNS, ...rows]);
   const wb = XLSX.utils.book_new();
