@@ -31,3 +31,5 @@ th { background: #f9fafb; position: sticky; top: 0; }
 .swatch span { display: block; font-size: 10px; margin-top: 3px; color: #444; line-height: 1.2; }
 .swatch.selected { border-color: #2563eb; background: #eff6ff; }
 .swatch.selected span { color: #2563eb; font-weight: 600; }
+.gift-swatch { padding: 16px 4px; }
+.gift-swatch span { margin-top: 0; font-size: 12px; }

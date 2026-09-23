@@ -147,11 +147,7 @@ function renderGiftSection() {
   const products = giftProducts();
   grid.innerHTML = products.map(p => {
     const key = `${p.code}|||${p.option}`;
-    const master = PRODUCTS.find(x => x.code === p.code && x.image) || p;
-    const img = master.image
-      ? `<img src="${master.image}" alt="${p.option}">`
-      : `<div style="aspect-ratio:4/5;border-radius:6px;background:#ddd;"></div>`;
-    return `<div class="swatch${key === currentGiftKey ? " selected" : ""}" data-key="${key}">${img}<span>${p.option}</span></div>`;
+    return `<div class="swatch gift-swatch${key === currentGiftKey ? " selected" : ""}" data-key="${key}"><span>${p.option}</span></div>`;
   }).join("");
   grid.querySelectorAll(".swatch").forEach(el => {
     el.addEventListener("click", () => {
