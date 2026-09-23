@@ -21,6 +21,12 @@
   .bundle-card .head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
   .bundle-card ul { margin: 6px 0 0; padding-left: 18px; }
   .save-bar { position: sticky; bottom: 0; background: #fff; border-top: 1px solid #eee; padding: 12px 0; margin-top: 20px; text-align: right; }
+  .expo-card { display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
+  .expo-card.active { border-color: #059669; background: #f0fdf4; }
+  .expo-card .badge { font-size: 11px; color: #059669; font-weight: 700; margin-left: 6px; }
+  .expo-card .actions button { font-size: 12px; padding: 5px 10px; margin-left: 6px; cursor: pointer; }
+  .price-input { width: 90px !important; margin-left: auto; font-size: 12px !important; padding: 4px 6px !important; }
+  .opt-row { justify-content: flex-start; }
 </style>
 </head>
 <body>
@@ -35,7 +41,18 @@
   </header>
   <main>
     <div class="card">
-      <h2>박람회 정보</h2>
+      <div class="card-header">
+        <h2>박람회 목록</h2>
+        <button class="ghost" id="new-expo-btn">+ 새 박람회</button>
+      </div>
+      <div id="expo-list"></div>
+    </div>
+
+    <div class="card">
+      <h2>박람회 정보 <span id="editing-label" style="font-weight:400;font-size:13px;color:#777;"></span></h2>
+      <label style="display:flex;align-items:center;gap:8px;font-weight:400;">
+        <input type="checkbox" id="s-활성" style="width:auto;"> 이 박람회를 주문 입력 화면에서 사용 (활성화)
+      </label>
       <label>박람회명</label>
       <input id="s-박람회명" placeholder="예: 9월 수원 박람회">
       <div class="row2">
@@ -46,7 +63,7 @@
 
     <div class="card">
       <h2>판매 제품 선택</h2>
-      <p style="font-size:12px;color:#777;margin-top:-6px;">이번 박람회에서 실제로 파는 제품만 체크하세요. 주문 입력 화면 드롭다운에 여기서 체크한 것만 나타납니다.</p>
+      <p style="font-size:12px;color:#777;margin-top:-6px;">이번 박람회에서 실제로 파는 제품만 체크하고, 가격을 입력하세요. 주문 입력 화면에서 옵션 선택 시 가격이 자동으로 채워집니다.</p>
       <div id="product-groups"></div>
     </div>
 

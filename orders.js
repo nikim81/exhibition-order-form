@@ -75,9 +75,13 @@ function explodeOrder(o, bundleMap) {
 }
 
 $("export-btn").addEventListener("click", async () => {
-  const { data: settingsRow } = await sb.from("settings").select("묶음구성").eq("id", 1).single();
+  const expoName = $("expo-filter").value;
   const bundleMap = {};
-  (settingsRow?.묶음구성 || []).forEach(b => { bundleMap[b.코드옵션] = b; });
+  if (expoName) {
+    const { data: rows } = await sb.from("exhibitions").select("묶음구성")
+      .eq("박람회명", expoName).order("created_at", { ascending: false }).limit(1);
+    (rows?.[0]?.묶음구성 || []).forEach(b => { bundleMap[b.코드옵션] = b; });
+  }
 
   const exploded = expoFiltered().flatMap(o => explodeOrder(o, bundleMap));
   const rows = exploded.map(o => COLUMNS.map(c => o[c] ?? ""));

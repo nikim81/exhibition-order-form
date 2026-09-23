@@ -1,9 +1,10 @@
 const $ = (id) => document.getElementById(id);
 const key = (p) => `${p.code}|||${p.option}`;
 
-let state = { 박람회명: "", 시작일: "", 종료일: "", 판매제품: [], 사은품: [], 묶음구성: [] };
+let exhibitions = [];
+let currentId = null; // null = 새 박람회 작성 중
+let state = { 박람회명: "", 시작일: "", 종료일: "", 판매제품: [], 사은품: [], 묶음구성: [], is_active: false };
 let bundleParts = []; // temp component list while building/editing a bundle
-let editingBundleKey = null;
 
 const productLabel = (p) => `${p.name} - ${p.option} (${p.code})`;
 
@@ -14,7 +15,84 @@ function fillProductSelects() {
   $("bundle-part-product").innerHTML = optionsHtml;
 }
 
-// ---- 판매 제품 체크박스 ----
+// ---- 박람회 목록 ----
+async function loadExhibitionList() {
+  const { data, error } = await sb.from("exhibitions").select("*").order("created_at", { ascending: false });
+  if (error) { console.error(error); return; }
+  exhibitions = data;
+  renderExpoList();
+}
+
+function renderExpoList() {
+  $("expo-list").innerHTML = exhibitions.map(e => `
+    <div class="expo-card ${e.is_active ? "active" : ""}">
+      <span>${e.박람회명}${e.is_active ? '<span class="badge">● 활성</span>' : ""}
+        <span style="color:#999;"> · ${e.시작일 || "?"} ~ ${e.종료일 || "?"}</span>
+      </span>
+      <span class="actions">
+        <button data-edit="${e.id}">수정</button>
+        ${e.is_active ? "" : `<button data-activate="${e.id}">활성화</button>`}
+        <button data-del="${e.id}">삭제</button>
+      </span>
+    </div>`).join("") || `<div style="color:#999;font-size:13px;">등록된 박람회 없음. "+ 새 박람회"로 추가하세요.</div>`;
+
+  $("expo-list").querySelectorAll("[data-edit]").forEach(b =>
+    b.addEventListener("click", () => selectExpo(b.dataset.edit)));
+  $("expo-list").querySelectorAll("[data-activate]").forEach(b =>
+    b.addEventListener("click", () => activateExpo(b.dataset.activate)));
+  $("expo-list").querySelectorAll("[data-del]").forEach(b =>
+    b.addEventListener("click", () => deleteExpo(b.dataset.del)));
+}
+
+function selectExpo(id) {
+  const e = exhibitions.find(x => x.id === id);
+  if (!e) return;
+  currentId = e.id;
+  state = {
+    박람회명: e.박람회명 || "",
+    시작일: e.시작일 || "",
+    종료일: e.종료일 || "",
+    판매제품: e.판매제품 || [],
+    사은품: e.사은품 || [],
+    묶음구성: e.묶음구성 || [],
+    is_active: e.is_active,
+  };
+  fillFormFromState();
+  window.scrollTo({ top: $("editing-label").getBoundingClientRect().top + window.scrollY - 80, behavior: "smooth" });
+}
+
+$("new-expo-btn").addEventListener("click", () => {
+  currentId = null;
+  state = { 박람회명: "", 시작일: "", 종료일: "", 판매제품: [], 사은품: [], 묶음구성: [], is_active: exhibitions.length === 0 };
+  fillFormFromState();
+});
+
+function fillFormFromState() {
+  $("editing-label").textContent = currentId ? "(수정 중)" : "(새 박람회)";
+  $("s-박람회명").value = state.박람회명;
+  $("s-시작일").value = state.시작일 || "";
+  $("s-종료일").value = state.종료일 || "";
+  $("s-활성").checked = state.is_active;
+  renderProductGroups();
+  renderGiftList();
+  renderBundleList();
+}
+
+async function activateExpo(id) {
+  await sb.from("exhibitions").update({ is_active: false }).neq("id", id);
+  await sb.from("exhibitions").update({ is_active: true }).eq("id", id);
+  await loadExhibitionList();
+  if (currentId === id) state.is_active = true, $("s-활성").checked = true;
+}
+
+async function deleteExpo(id) {
+  if (!confirm("이 박람회 세팅을 삭제할까요? (해당 박람회로 접수된 주문 데이터는 지워지지 않습니다)")) return;
+  await sb.from("exhibitions").delete().eq("id", id);
+  if (currentId === id) { currentId = null; state = { 박람회명: "", 시작일: "", 종료일: "", 판매제품: [], 사은품: [], 묶음구성: [], is_active: false }; fillFormFromState(); }
+  await loadExhibitionList();
+}
+
+// ---- 판매 제품 체크박스 + 가격 ----
 function renderProductGroups() {
   const names = [...new Set(PRODUCTS.map(p => p.name))];
   $("product-groups").innerHTML = names.map(name => {
@@ -26,12 +104,15 @@ function renderProductGroups() {
           <input type="checkbox" class="group-all" ${allChecked ? "checked" : ""}>
           ${name}
         </div>
-        ${opts.map(o => `
+        ${opts.map(o => {
+          const sp = state.판매제품.find(x => x.code === o.code && x.option === o.option);
+          return `
           <div class="opt-row">
-            <input type="checkbox" class="opt-check" data-code="${o.code}" data-option="${o.option}"
-              ${state.판매제품.some(sp => sp.code === o.code && sp.option === o.option) ? "checked" : ""}>
-            ${o.option} (${o.code})
-          </div>`).join("")}
+            <input type="checkbox" class="opt-check" data-code="${o.code}" data-option="${o.option}" ${sp ? "checked" : ""}>
+            <span>${o.option} (${o.code})</span>
+            ${sp ? `<input type="number" min="0" class="price-input" placeholder="가격" data-code="${o.code}" data-option="${o.option}" value="${sp.price ?? ""}">` : ""}
+          </div>`;
+        }).join("")}
       </div>`;
   }).join("");
 
@@ -39,11 +120,17 @@ function renderProductGroups() {
     cb.addEventListener("change", () => {
       const p = PRODUCTS.find(x => x.code === cb.dataset.code && x.option === cb.dataset.option);
       if (cb.checked) {
-        if (!state.판매제품.some(sp => sp.code === p.code && sp.option === p.option)) state.판매제품.push(p);
+        if (!state.판매제품.some(sp => sp.code === p.code && sp.option === p.option)) state.판매제품.push({ ...p, price: null });
       } else {
         state.판매제품 = state.판매제품.filter(sp => !(sp.code === p.code && sp.option === p.option));
       }
       renderProductGroups();
+    });
+  });
+  $("product-groups").querySelectorAll(".price-input").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const sp = state.판매제품.find(x => x.code === inp.dataset.code && x.option === inp.dataset.option);
+      if (sp) sp.price = inp.value ? Number(inp.value) : null;
     });
   });
   $("product-groups").querySelectorAll(".group-all").forEach(cb => {
@@ -51,7 +138,7 @@ function renderProductGroups() {
       const name = cb.closest(".group").dataset.name;
       const opts = PRODUCTS.filter(p => p.name === name);
       if (cb.checked) {
-        opts.forEach(o => { if (!state.판매제품.some(sp => sp.code === o.code && sp.option === o.option)) state.판매제품.push(o); });
+        opts.forEach(o => { if (!state.판매제품.some(sp => sp.code === o.code && sp.option === o.option)) state.판매제품.push({ ...o, price: null }); });
       } else {
         state.판매제품 = state.판매제품.filter(sp => !opts.some(o => o.code === sp.code && o.option === sp.option));
       }
@@ -118,7 +205,6 @@ function renderBundleList() {
 function startEditBundle(k) {
   const b = state.묶음구성.find(x => x.코드옵션 === k);
   if (!b) return;
-  editingBundleKey = k;
   $("bundle-base").value = k;
   bundleParts = b.구성품.map(c => ({ ...c }));
   renderBundleParts();
@@ -127,7 +213,6 @@ function startEditBundle(k) {
 }
 
 $("bundle-cancel-btn").addEventListener("click", () => {
-  editingBundleKey = null;
   bundleParts = [];
   renderBundleParts();
   $("bundle-cancel-btn").classList.add("hidden");
@@ -141,36 +226,21 @@ $("bundle-save-btn").addEventListener("click", () => {
   const entry = { 코드옵션: baseKey, 상품명: `${base.name} - ${base.option}`, 구성품: bundleParts };
   state.묶음구성 = state.묶음구성.filter(x => x.코드옵션 !== baseKey);
   state.묶음구성.push(entry);
-  editingBundleKey = null;
   bundleParts = [];
   renderBundleParts();
   $("bundle-cancel-btn").classList.add("hidden");
   renderBundleList();
 });
 
-// ---- 저장/불러오기 ----
-async function loadSettings() {
-  const { data, error } = await sb.from("settings").select("*").eq("id", 1).single();
-  if (error) { console.error(error); return; }
-  state.박람회명 = data.박람회명 || "";
-  state.시작일 = data.시작일 || "";
-  state.종료일 = data.종료일 || "";
-  state.판매제품 = data.판매제품 || [];
-  state.사은품 = data.사은품 || [];
-  state.묶음구성 = data.묶음구성 || [];
-  $("s-박람회명").value = state.박람회명;
-  $("s-시작일").value = state.시작일 || "";
-  $("s-종료일").value = state.종료일 || "";
-  renderProductGroups();
-  renderGiftList();
-  renderBundleList();
-}
-
+// ---- 저장 ----
 $("save-btn").addEventListener("click", async () => {
   state.박람회명 = $("s-박람회명").value.trim();
   state.시작일 = $("s-시작일").value || null;
   state.종료일 = $("s-종료일").value || null;
-  const { error } = await sb.from("settings").update({
+  state.is_active = $("s-활성").checked;
+  if (!state.박람회명) { $("save-msg").textContent = "박람회명을 입력하세요."; return; }
+
+  const payload = {
     박람회명: state.박람회명,
     시작일: state.시작일,
     종료일: state.종료일,
@@ -178,9 +248,24 @@ $("save-btn").addEventListener("click", async () => {
     사은품: state.사은품,
     묶음구성: state.묶음구성,
     updated_at: new Date().toISOString(),
-  }).eq("id", 1);
+  };
+
+  let error, newId;
+  if (currentId) {
+    ({ error } = await sb.from("exhibitions").update(payload).eq("id", currentId));
+  } else {
+    const res = await sb.from("exhibitions").insert(payload).select("id").single();
+    error = res.error;
+    newId = res.data?.id;
+    if (newId) currentId = newId;
+  }
+  if (!error && state.is_active && currentId) {
+    await sb.from("exhibitions").update({ is_active: false }).neq("id", currentId);
+    await sb.from("exhibitions").update({ is_active: true }).eq("id", currentId);
+  }
   $("save-msg").textContent = error ? error.message : "저장 완료";
   if (!error) setTimeout(() => $("save-msg").textContent = "", 2000);
+  await loadExhibitionList();
 });
 
 $("logout-btn").addEventListener("click", () => sb.auth.signOut());
@@ -190,5 +275,8 @@ $("logout-btn").addEventListener("click", () => sb.auth.signOut());
   if (!session) { location.href = "index.html"; return; }
   $("app").classList.remove("hidden");
   fillProductSelects();
-  await loadSettings();
+  await loadExhibitionList();
+  const active = exhibitions.find(e => e.is_active);
+  if (active) selectExpo(active.id);
+  else fillFormFromState();
 })();

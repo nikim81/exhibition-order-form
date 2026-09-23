@@ -14,6 +14,7 @@ function fillOptionSelect() {
   const opts = activeProducts.filter(p => p.name === name);
   $("f-옵션").value = opts.length ? `${opts[0].code}|||${opts[0].option}` : "";
   renderSwatchGrid(opts, $("f-옵션").value);
+  applyPrice();
 }
 function renderSwatchGrid(opts, selectedValue) {
   const grid = $("f-옵션-grid");
@@ -30,17 +31,35 @@ function renderSwatchGrid(opts, selectedValue) {
       $("f-옵션").value = el.dataset.value;
       grid.querySelectorAll(".swatch").forEach(s => s.classList.remove("selected"));
       el.classList.add("selected");
+      applyPrice();
     });
   });
 }
 $("f-상품명").addEventListener("change", fillOptionSelect);
+$("f-수량").addEventListener("input", applyPrice);
 fillProductSelect();
 
 async function loadSettings() {
-  const { data, error } = await sb.from("settings").select("*").eq("id", 1).single();
+  const { data, error } = await sb.from("exhibitions").select("*").eq("is_active", true).limit(1).single();
   if (error || !data) return;
   settings = data;
   activeProducts = (data.판매제품 && data.판매제품.length) ? data.판매제품 : PRODUCTS;
+}
+
+function priceFor(code, option) {
+  const p = activeProducts.find(x => x.code === code && x.option === option);
+  return p && p.price != null ? Number(p.price) : null;
+}
+
+function applyPrice() {
+  const val = $("f-옵션").value;
+  if (!val) return;
+  const [code, option] = val.split("|||");
+  const price = priceFor(code, option);
+  if (price != null) {
+    const qty = Number($("f-수량").value) || 1;
+    $("f-주문금액").value = price * qty;
+  }
 }
 
 // ---- default field values ----
