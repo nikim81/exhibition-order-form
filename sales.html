@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>판매 현황 - 유팡 박람회</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link rel="stylesheet" href="style.css">
+<style>
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-tile { background: #f9fafb; border: 1px solid #eee; border-radius: 8px; padding: 16px; }
+  .stat-tile .label { font-size: 12px; color: #777; }
+  .stat-tile .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+  #expo-select { max-width: 260px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>판매 현황</h1>
+    <div id="userbar">
+      <a href="admin.html" class="ghost" style="color:#fff;text-decoration:none;padding:6px 12px;border-radius:4px;background:#374151;">☰ 메뉴</a>
+      <button id="logout-btn">로그아웃</button>
+    </div>
+  </header>
+  <main>
+    <div class="card">
+      <label>박람회 선택</label>
+      <select id="expo-select"></select>
+
+      <div class="stat-row">
+        <div class="stat-tile"><div class="label">총 주문 건수</div><div class="value" id="stat-count">-</div></div>
+        <div class="stat-tile"><div class="label">총 수량</div><div class="value" id="stat-qty">-</div></div>
+        <div class="stat-tile"><div class="label">총 주문금액</div><div class="value" id="stat-amount">-</div></div>
+      </div>
+
+      <h2>컬러별 판매 현황</h2>
+      <table>
+        <thead><tr><th>상품명</th><th>옵션명(컬러)</th><th>건수</th><th>수량</th></tr></thead>
+        <tbody id="color-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="client.js"></script>
+<script src="sales.js"></script>
+</body>
+</html>

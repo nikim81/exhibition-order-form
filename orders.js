@@ -7,14 +7,29 @@ async function loadOrders() {
   const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false });
   if (error) { console.error(error); return; }
   orders = data;
+  fillExpoFilter();
   renderTable();
+}
+
+function fillExpoFilter() {
+  const sel = $("expo-filter");
+  const prev = sel.value;
+  const expos = [...new Set(orders.map(o => o.판매처).filter(Boolean))];
+  sel.innerHTML = `<option value="">전체 박람회</option>` + expos.map(e => `<option value="${e}">${e}</option>`).join("");
+  sel.value = expos.includes(prev) ? prev : (expos[0] || "");
+}
+
+function expoFiltered() {
+  const expo = $("expo-filter").value;
+  return expo ? orders.filter(o => o.판매처 === expo) : orders;
 }
 
 function renderTable() {
   const q = $("search").value.trim().toLowerCase();
+  const base = expoFiltered();
   const rows = q
-    ? orders.filter(o => (o.수취인 || "").toLowerCase().includes(q) || (o.연락처 || "").toLowerCase().includes(q))
-    : orders;
+    ? base.filter(o => (o.수취인 || "").toLowerCase().includes(q) || (o.연락처 || "").toLowerCase().includes(q))
+    : base;
 
   $("count-badge").textContent = `(${rows.length}/${orders.length}건)`;
   $("tbody").innerHTML = rows.map(o => `
@@ -43,6 +58,7 @@ async function deleteOrder(id) {
 }
 
 $("search").addEventListener("input", renderTable);
+$("expo-filter").addEventListener("change", renderTable);
 $("refresh-btn").addEventListener("click", loadOrders);
 
 function explodeOrder(o, bundleMap) {
@@ -63,12 +79,13 @@ $("export-btn").addEventListener("click", async () => {
   const bundleMap = {};
   (settingsRow?.묶음구성 || []).forEach(b => { bundleMap[b.코드옵션] = b; });
 
-  const exploded = orders.flatMap(o => explodeOrder(o, bundleMap));
+  const exploded = expoFiltered().flatMap(o => explodeOrder(o, bundleMap));
   const rows = exploded.map(o => COLUMNS.map(c => o[c] ?? ""));
   const ws = XLSX.utils.aoa_to_sheet([COLUMNS, ...rows]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  XLSX.writeFile(wb, `사방넷_출고요청서_${today()}.xlsx`);
+  const expoLabel = $("expo-filter").value || "전체";
+  XLSX.writeFile(wb, `사방넷_출고요청서_${expoLabel}_${today()}.xlsx`);
 });
 
 $("logout-btn").addEventListener("click", () => sb.auth.signOut());

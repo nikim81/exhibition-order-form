@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주문 목록 - 유팡 박람회</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="style.css">
+<style>
+  #search { max-width: 240px; }
+  #expo-filter { max-width: 200px; }
+  .card-header .right { display: flex; gap: 8px; align-items: center; }
+</style>
+</head>
+<body>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>주문 목록</h1>
+    <div id="userbar">
+      <a href="admin.html" class="ghost" style="color:#fff;text-decoration:none;padding:6px 12px;border-radius:4px;background:#374151;">☰ 메뉴</a>
+      <button id="logout-btn">로그아웃</button>
+    </div>
+  </header>
+  <main>
+    <div class="card">
+      <div class="card-header">
+        <h2>주문 목록 <span id="count-badge"></span></h2>
+        <div class="right">
+          <select id="expo-filter"></select>
+          <input id="search" type="text" placeholder="수취인 이름 또는 연락처로 검색">
+          <button id="refresh-btn" class="ghost">새로고침</button>
+          <button id="export-btn" class="export">사방넷 업로드용 다운로드</button>
+        </div>
+      </div>
+      <div id="table-wrap">
+        <table>
+          <thead><tr>
+            <th>판매처</th><th>주문번호</th><th>주문일</th><th>상품명</th><th>상품코드</th><th>옵션명</th>
+            <th>수량</th><th>주문금액</th><th>업체명</th><th>수취인</th><th>연락처</th><th>우편번호</th>
+            <th>주소</th><th>배송희망일자</th><th>배송메세지</th><th></th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="client.js"></script>
+<script src="orders.js"></script>
+</body>
+</html>
