@@ -20,7 +20,6 @@ const PRODUCTS = [
   { name: "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)", code: "100235", option: "매트블랙+ACC4종" },
   { name: "ACC", code: "100001", option: "세로형거치대", image: "images/세로형거치대.png" },
   { name: "ACC", code: "100000", option: "수납형거치대", image: "images/수납현거치대.png" },
-  { name: "ACC", code: "100003", option: "멀티거치대 2종세트" },
   { name: "ACC", code: "100002", option: "다용도걸이", image: "images/다용도걸이.png" },
   { name: "ACC", code: "100162", option: "멀티선반", image: "images/멀티선반.png" },
   { name: "[사은품] 헤이홈 스마트 홈카메라", code: "100205", option: "[증정]홈카메라", image: "images/헤이홈.png" },
