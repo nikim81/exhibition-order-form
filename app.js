@@ -307,8 +307,9 @@ $("login-btn").addEventListener("click", async () => {
 
 $("logout-btn").addEventListener("click", () => sb.auth.signOut());
 
-sb.auth.onAuthStateChange(async (_event, session) => {
+sb.auth.onAuthStateChange(async (event, session) => {
   if (session) {
+    if (event === "SIGNED_IN") { location.href = "admin.html"; return; }
     $("login-card").classList.add("hidden");
     $("app").classList.remove("hidden");
     await loadSettings();
