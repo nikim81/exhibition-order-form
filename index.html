@@ -51,6 +51,7 @@
         <input id="f-연락처" placeholder="010-0000-0000">
         <label>주소 *</label>
         <div class="addr-row">
+          <input id="f-우편번호" readonly placeholder="우편번호" class="zip-input">
           <input id="f-주소" readonly placeholder="주소 검색을 눌러주세요">
           <button type="button" class="ghost" id="addr-search-btn">🔍 주소 검색</button>
         </div>
@@ -74,10 +75,8 @@
           <div><label>수량</label><input id="f-수량" type="number" min="1" value="1"></div>
           <div><label>주문금액</label><input id="f-주문금액" type="number" min="0"></div>
         </div>
-        <div class="row2">
-          <div><label>우편번호</label><input id="f-우편번호"></div>
-          <div><label>배송희망일자</label><input id="f-배송희망일자" type="date"></div>
-        </div>
+        <label>배송희망일자</label>
+        <input id="f-배송희망일자" type="date">
         <label>배송메세지</label>
         <textarea id="f-배송메세지" rows="2"></textarea>
       </div>

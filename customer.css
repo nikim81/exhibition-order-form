@@ -154,10 +154,15 @@ button.ghost { border-radius: 10px; }
 
 .addr-row { display: flex; gap: 8px; }
 .addr-row input { flex: 1; }
+.addr-row input.zip-input { flex: 0 0 90px; }
 .addr-row button { white-space: nowrap; margin: 0; }
 
 @media (max-width: 480px) {
   .tear-line { margin-left: -18px; margin-right: -18px; }
   .row2, .row3 { grid-template-columns: 1fr; }
   .card { padding: 24px 18px; }
+  .addr-row { flex-wrap: wrap; }
+  .addr-row input.zip-input { flex: 0 0 90px; }
+  .addr-row input:not(.zip-input) { flex: 1 1 auto; min-width: 120px; }
+  .addr-row button { flex: 1 0 100%; margin-top: 4px; }
 }
