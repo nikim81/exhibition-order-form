@@ -93,6 +93,16 @@ async function deleteExpo(id) {
 }
 
 // ---- 판매 제품 체크박스 + 가격 ----
+let touchedPriceKeys = new Set(); // 수기로 직접 수정한 항목(자동 동기화 대상에서 제외)
+
+function formatPrice(n) { return (n === null || n === undefined || n === "") ? "" : Number(n).toLocaleString("ko-KR"); }
+function parsePrice(s) { const digits = String(s).replace(/[^0-9]/g, ""); return digits ? Number(digits) : null; }
+
+function groupPrice(name) {
+  const found = state.판매제품.find(sp => sp.name === name && sp.price != null);
+  return found ? found.price : null;
+}
+
 function renderProductGroups() {
   const names = [...new Set(PRODUCTS.map(p => p.name))];
   $("product-groups").innerHTML = names.map(name => {
@@ -111,7 +121,7 @@ function renderProductGroups() {
           <div class="opt-row">
             <input type="checkbox" class="opt-check" data-code="${o.code}" data-option="${o.option}" ${sp ? "checked" : ""}>
             <span>${o.option} (${o.code})</span>
-            ${sp && !isGift ? `<input type="number" min="0" class="price-input" placeholder="가격" data-code="${o.code}" data-option="${o.option}" value="${sp.price ?? ""}">` : ""}
+            ${sp && !isGift ? `<input type="text" inputmode="numeric" class="price-input" placeholder="가격" data-code="${o.code}" data-option="${o.option}" data-name="${name}" value="${formatPrice(sp.price)}">` : ""}
           </div>`;
         }).join("")}
       </div>`;
@@ -121,7 +131,9 @@ function renderProductGroups() {
     cb.addEventListener("change", () => {
       const p = PRODUCTS.find(x => x.code === cb.dataset.code && x.option === cb.dataset.option);
       if (cb.checked) {
-        if (!state.판매제품.some(sp => sp.code === p.code && sp.option === p.option)) state.판매제품.push({ ...p, price: null });
+        if (!state.판매제품.some(sp => sp.code === p.code && sp.option === p.option)) {
+          state.판매제품.push({ ...p, price: groupPrice(p.name) });
+        }
       } else {
         state.판매제품 = state.판매제품.filter(sp => !(sp.code === p.code && sp.option === p.option));
       }
@@ -130,8 +142,23 @@ function renderProductGroups() {
   });
   $("product-groups").querySelectorAll(".price-input").forEach(inp => {
     inp.addEventListener("input", () => {
+      const key = `${inp.dataset.code}|||${inp.dataset.option}`;
+      const value = parsePrice(inp.value);
+      inp.value = formatPrice(value);
+      touchedPriceKeys.add(key);
+
       const sp = state.판매제품.find(x => x.code === inp.dataset.code && x.option === inp.dataset.option);
-      if (sp) sp.price = inp.value ? Number(inp.value) : null;
+      if (sp) sp.price = value;
+
+      // 같은 상품군의, 아직 수기로 손대지 않은 항목들에 동일 가격 자동 반영
+      state.판매제품
+        .filter(x => x.name === inp.dataset.name && !(x.code === inp.dataset.code && x.option === inp.dataset.option))
+        .filter(x => !touchedPriceKeys.has(`${x.code}|||${x.option}`))
+        .forEach(x => {
+          x.price = value;
+          const sibling = $("product-groups").querySelector(`.price-input[data-code="${x.code}"][data-option="${x.option}"]`);
+          if (sibling) sibling.value = formatPrice(value);
+        });
     });
   });
   $("product-groups").querySelectorAll(".group-all").forEach(cb => {
@@ -139,7 +166,8 @@ function renderProductGroups() {
       const name = cb.closest(".group").dataset.name;
       const opts = PRODUCTS.filter(p => p.name === name);
       if (cb.checked) {
-        opts.forEach(o => { if (!state.판매제품.some(sp => sp.code === o.code && sp.option === o.option)) state.판매제품.push({ ...o, price: null }); });
+        const price = groupPrice(name);
+        opts.forEach(o => { if (!state.판매제품.some(sp => sp.code === o.code && sp.option === o.option)) state.판매제품.push({ ...o, price }); });
       } else {
         state.판매제품 = state.판매제품.filter(sp => !opts.some(o => o.code === sp.code && o.option === sp.option));
       }
