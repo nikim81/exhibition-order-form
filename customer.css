@@ -136,6 +136,26 @@ button.ghost { border-radius: 10px; }
   letter-spacing: 0.03em;
 }
 
+#addr-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+#addr-modal-inner {
+  background: #fff; border-radius: 14px; padding: 12px;
+  width: min(420px, 92vw); height: min(560px, 85vh);
+  position: relative; box-shadow: 0 12px 40px rgba(0,0,0,.2);
+}
+#addr-modal-close {
+  position: absolute; top: -14px; right: -14px; width: 32px; height: 32px;
+  border-radius: 50%; background: #1a1a1a; color: #fff; border: none;
+  font-size: 14px; cursor: pointer; z-index: 1;
+}
+#addr-embed { width: 100%; height: 100%; }
+
+.addr-row { display: flex; gap: 8px; }
+.addr-row input { flex: 1; }
+.addr-row button { white-space: nowrap; margin: 0; }
+
 @media (max-width: 480px) {
   .tear-line { margin-left: -18px; margin-right: -18px; }
   .row2, .row3 { grid-template-columns: 1fr; }

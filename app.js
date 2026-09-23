@@ -39,6 +39,26 @@ $("f-상품명").addEventListener("change", fillOptionSelect);
 $("f-수량").addEventListener("input", applyPrice);
 fillProductSelect();
 
+function closeAddrModal() {
+  $("addr-modal").classList.add("hidden");
+  $("addr-embed").innerHTML = "";
+}
+$("addr-search-btn").addEventListener("click", () => {
+  $("addr-modal").classList.remove("hidden");
+  $("addr-embed").innerHTML = "";
+  new daum.Postcode({
+    oncomplete: (data) => {
+      $("f-주소").value = data.roadAddress || data.jibunAddress;
+      $("f-우편번호").value = data.zonecode;
+      closeAddrModal();
+      $("f-상세주소").focus();
+    },
+    width: "100%",
+    height: "100%",
+  }).embed($("addr-embed"));
+});
+$("addr-modal-close").addEventListener("click", closeAddrModal);
+
 async function loadSettings() {
   const { data, error } = await sb.from("exhibitions").select("*").eq("is_active", true).limit(1).single();
   if (error || !data) return;
@@ -80,6 +100,7 @@ function resetForm() {
   $("f-우편번호").value = "";
   $("f-배송희망일자").value = "";
   $("f-주소").value = "";
+  $("f-상세주소").value = "";
   $("f-배송메세지").value = "";
   $("f-동의").checked = false;
   $("err").textContent = "";
@@ -105,7 +126,7 @@ function readForm() {
     수취인: $("f-수취인").value.trim(),
     연락처: $("f-연락처").value.trim(),
     우편번호: $("f-우편번호").value.trim(),
-    주소: $("f-주소").value.trim(),
+    주소: `${$("f-주소").value.trim()} ${$("f-상세주소").value.trim()}`.trim(),
     배송희망일자: $("f-배송희망일자").value,
     배송메세지: $("f-배송메세지").value.trim(),
     개인정보동의: $("f-동의").checked,
@@ -114,7 +135,7 @@ function readForm() {
 
 $("submit-btn").addEventListener("click", async () => {
   const data = readForm();
-  if (!data.수취인 || !data.연락처 || !data.주소) {
+  if (!data.수취인 || !data.연락처 || !$("f-주소").value.trim()) {
     $("err").textContent = "수취인, 연락처, 주소는 필수입니다.";
     return;
   }
@@ -161,6 +182,7 @@ function startEdit(order) {
   $("f-우편번호").value = order.우편번호 || "";
   $("f-배송희망일자").value = order.배송희망일자 || "";
   $("f-주소").value = order.주소 || "";
+  $("f-상세주소").value = "";
   $("f-배송메세지").value = order.배송메세지 || "";
   $("f-동의").checked = !!order.개인정보동의;
   window.scrollTo({ top: 0, behavior: "smooth" });
