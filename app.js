@@ -134,7 +134,7 @@ function addGiftToCart() {
   if (currentGiftCartKey && currentGiftCartKey !== cartKey) cart.delete(currentGiftCartKey);
   cart.set(cartKey, {
     name: isDelivery ? `${p.name}(배송)` : p.name,
-    code: isDelivery ? `${p.code}-배송` : p.code, // TODO: 배송 사은품 실제 사방넷 코드로 교체 필요
+    code: p.code, // 사방넷 등록 코드는 그대로 유지 (배송 여부는 옵션명으로만 구분)
     option: isDelivery ? `${p.option}(배송)` : p.option,
     price: isDelivery ? 2500 : null,
     qty: 1,
