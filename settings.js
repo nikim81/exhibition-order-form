@@ -139,17 +139,19 @@ function renderProductGroups() {
     });
   });
   $("product-groups").querySelectorAll(".price-input").forEach(inp => {
+    // 타이핑 중에는 콤마 표시만 갱신 (매 키 입력마다 그룹 동기화하면 값이 끊겨서 전달됨)
     inp.addEventListener("input", () => {
       const value = parsePrice(inp.value);
       inp.value = formatPrice(value);
-
-      const siblings = state.판매제품.filter(x => x.name === inp.dataset.name && !(x.code === inp.dataset.code && x.option === inp.dataset.option));
-      const isFirstPriceInGroup = siblings.length > 0 && siblings.every(x => x.price == null);
-
       const sp = state.판매제품.find(x => x.code === inp.dataset.code && x.option === inp.dataset.option);
       if (sp) sp.price = value;
-
-      // 이 상품군에 처음 입력하는 가격이면 나머지 항목에도 동일하게 반영. 이미 가격이 있던 항목이 있으면(수기 수정 포함) 이 항목만 개별 수정.
+    });
+    // 입력을 마쳤을 때(포커스 아웃)만 그룹 동기화 여부 판단
+    inp.addEventListener("change", () => {
+      if (inp.dataset.name === "ACC") return; // ACC는 서로 다른 상품이라 동기화 제외
+      const value = parsePrice(inp.value);
+      const siblings = state.판매제품.filter(x => x.name === inp.dataset.name && !(x.code === inp.dataset.code && x.option === inp.dataset.option));
+      const isFirstPriceInGroup = siblings.length > 0 && siblings.every(x => x.price == null);
       if (isFirstPriceInGroup) {
         siblings.forEach(x => {
           x.price = value;
