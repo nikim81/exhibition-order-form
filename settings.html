@@ -80,6 +80,13 @@
     <div class="card">
       <h2>세트 상품 분해 (묶음 구성)</h2>
       <p style="font-size:12px;color:#777;margin-top:-6px;">묶음 상품을 주문받으면, 사방넷 다운로드 시 아래 구성품들로 나뉘어 각각 한 줄씩 올라갑니다.</p>
+
+      <div class="inline" style="margin-top:10px;">
+        <select id="bundle-template-select"><option value="">-- 저장된 묶음 템플릿 불러오기 --</option></select>
+        <button class="ghost" id="bundle-template-load-btn">불러오기</button>
+        <button class="ghost" id="bundle-template-save-btn">현재 구성 템플릿으로 저장</button>
+      </div>
+
       <label>본품 (묶음 상품)</label>
       <select id="bundle-base"></select>
 

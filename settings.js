@@ -231,6 +231,37 @@ function renderBundleList() {
     }));
 }
 
+// ---- 묶음 템플릿 (여러 박람회에서 재사용) ----
+let bundleTemplates = [];
+
+async function loadBundleTemplates() {
+  const { data, error } = await sb.from("bundle_templates").select("*").order("created_at", { ascending: false });
+  if (error) { console.error(error); return; }
+  bundleTemplates = data;
+  $("bundle-template-select").innerHTML = `<option value="">-- 저장된 묶음 템플릿 불러오기 --</option>` +
+    bundleTemplates.map(t => `<option value="${t.id}">${t.이름} (${t.구성.length}개)</option>`).join("");
+}
+
+$("bundle-template-load-btn").addEventListener("click", () => {
+  const id = $("bundle-template-select").value;
+  if (!id) return;
+  const t = bundleTemplates.find(x => x.id === id);
+  if (!t) return;
+  if (state.묶음구성.length > 0 && !confirm("현재 묶음 구성을 템플릿 내용으로 덮어쓸까요?")) return;
+  state.묶음구성 = t.구성.map(b => ({ ...b, 구성품: b.구성품.map(c => ({ ...c })) }));
+  renderBundleList();
+});
+
+$("bundle-template-save-btn").addEventListener("click", async () => {
+  if (state.묶음구성.length === 0) { alert("저장할 묶음 구성이 없습니다."); return; }
+  const name = prompt("템플릿 이름을 입력하세요", `묶음 템플릿 ${bundleTemplates.length + 1}`);
+  if (!name) return;
+  const { error } = await sb.from("bundle_templates").insert({ 이름: name, 구성: state.묶음구성 });
+  if (error) { alert(error.message); return; }
+  await loadBundleTemplates();
+  alert("템플릿으로 저장했습니다.");
+});
+
 function startEditBundle(k) {
   const b = state.묶음구성.find(x => x.코드옵션 === k);
   if (!b) return;
@@ -304,6 +335,7 @@ $("logout-btn").addEventListener("click", () => sb.auth.signOut());
   if (!session) { location.href = "index.html"; return; }
   $("app").classList.remove("hidden");
   fillProductSelects();
+  await loadBundleTemplates();
   await loadExhibitionList();
   const active = exhibitions.find(e => e.is_active);
   if (active) selectExpo(active.id);
