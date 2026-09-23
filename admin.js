@@ -82,13 +82,6 @@ sb.channel("orders-changes")
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { location.href = "index.html"; return; }
 
-  const pw = prompt("관리자 비밀번호를 입력하세요");
-  if (pw !== "1114") {
-    alert(pw === null ? "취소되었습니다." : "비밀번호가 틀렸습니다.");
-    location.href = "index.html";
-    return;
-  }
-
   $("app").classList.remove("hidden");
   loadOrders();
 })();
