@@ -25,8 +25,8 @@ th { background: #f9fafb; position: sticky; top: 0; }
 .card-header { display: flex; justify-content: space-between; align-items: center; }
 #count-badge { font-size: 13px; color: #555; }
 .hidden { display: none !important; }
-.swatch-grid { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 8px; margin-top: 6px; padding-bottom: 4px; }
-.swatch { flex: 0 0 64px; width: 64px; border: 2px solid transparent; border-radius: 8px; padding: 4px; cursor: pointer; text-align: center; background: #fafafa; }
+.swatch-grid { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin-top: 6px; }
+.swatch { width: 100%; min-width: 0; border: 2px solid transparent; border-radius: 8px; padding: 4px; cursor: pointer; text-align: center; background: #fafafa; box-sizing: border-box; }
 .swatch img { width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: 6px; display: block; }
 .swatch span { display: block; font-size: 10px; margin-top: 3px; color: #444; line-height: 1.2; }
 .swatch.selected { border-color: #2563eb; background: #eff6ff; }
