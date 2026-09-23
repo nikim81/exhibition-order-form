@@ -93,8 +93,6 @@ async function deleteExpo(id) {
 }
 
 // ---- 판매 제품 체크박스 + 가격 ----
-let touchedPriceKeys = new Set(); // 수기로 직접 수정한 항목(자동 동기화 대상에서 제외)
-
 function formatPrice(n) { return (n === null || n === undefined || n === "") ? "" : Number(n).toLocaleString("ko-KR"); }
 function parsePrice(s) { const digits = String(s).replace(/[^0-9]/g, ""); return digits ? Number(digits) : null; }
 
@@ -142,23 +140,23 @@ function renderProductGroups() {
   });
   $("product-groups").querySelectorAll(".price-input").forEach(inp => {
     inp.addEventListener("input", () => {
-      const key = `${inp.dataset.code}|||${inp.dataset.option}`;
       const value = parsePrice(inp.value);
       inp.value = formatPrice(value);
-      touchedPriceKeys.add(key);
+
+      const siblings = state.판매제품.filter(x => x.name === inp.dataset.name && !(x.code === inp.dataset.code && x.option === inp.dataset.option));
+      const isFirstPriceInGroup = siblings.length > 0 && siblings.every(x => x.price == null);
 
       const sp = state.판매제품.find(x => x.code === inp.dataset.code && x.option === inp.dataset.option);
       if (sp) sp.price = value;
 
-      // 같은 상품군의, 아직 수기로 손대지 않은 항목들에 동일 가격 자동 반영
-      state.판매제품
-        .filter(x => x.name === inp.dataset.name && !(x.code === inp.dataset.code && x.option === inp.dataset.option))
-        .filter(x => !touchedPriceKeys.has(`${x.code}|||${x.option}`))
-        .forEach(x => {
+      // 이 상품군에 처음 입력하는 가격이면 나머지 항목에도 동일하게 반영. 이미 가격이 있던 항목이 있으면(수기 수정 포함) 이 항목만 개별 수정.
+      if (isFirstPriceInGroup) {
+        siblings.forEach(x => {
           x.price = value;
           const sibling = $("product-groups").querySelector(`.price-input[data-code="${x.code}"][data-option="${x.option}"]`);
           if (sibling) sibling.value = formatPrice(value);
         });
+      }
     });
   });
   $("product-groups").querySelectorAll(".group-all").forEach(cb => {
