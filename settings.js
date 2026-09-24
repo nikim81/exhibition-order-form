@@ -32,15 +32,15 @@ function renderExpoList() {
       </span>
       <span class="actions">
         <button data-edit="${e.id}">수정</button>
-        ${e.is_active ? "" : `<button data-activate="${e.id}">활성화</button>`}
+        <button data-toggle="${e.id}" data-next="${!e.is_active}">${e.is_active ? "비활성화" : "활성화"}</button>
         <button data-del="${e.id}">삭제</button>
       </span>
     </div>`).join("") || `<div style="color:#999;font-size:13px;">등록된 박람회 없음. "+ 새 박람회"로 추가하세요.</div>`;
 
   $("expo-list").querySelectorAll("[data-edit]").forEach(b =>
     b.addEventListener("click", () => selectExpo(b.dataset.edit)));
-  $("expo-list").querySelectorAll("[data-activate]").forEach(b =>
-    b.addEventListener("click", () => activateExpo(b.dataset.activate)));
+  $("expo-list").querySelectorAll("[data-toggle]").forEach(b =>
+    b.addEventListener("click", () => setExpoActive(b.dataset.toggle, b.dataset.next === "true")));
   $("expo-list").querySelectorAll("[data-del]").forEach(b =>
     b.addEventListener("click", () => deleteExpo(b.dataset.del)));
 }
@@ -79,10 +79,10 @@ function fillFormFromState() {
   renderBundleList();
 }
 
-async function activateExpo(id) {
-  await sb.from("exhibitions").update({ is_active: true }).eq("id", id);
+async function setExpoActive(id, active) {
+  await sb.from("exhibitions").update({ is_active: active }).eq("id", id);
   await loadExhibitionList();
-  if (currentId === id) state.is_active = true, $("s-활성").checked = true;
+  if (currentId === id) { state.is_active = active; $("s-활성").checked = active; }
 }
 
 async function deleteExpo(id) {
