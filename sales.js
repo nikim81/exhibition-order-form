@@ -26,6 +26,13 @@ function render() {
   const totalAmount = rows.reduce((s, o) => s + (Number(o.주문금액) || 0), 0);
   $("stat-amount").textContent = `${totalAmount.toLocaleString()}원`;
 
+  const isMain = (o) => (o.상품명 || "").includes("시그니처2플러스");
+  const isAcc = (o) => o.상품명 === "ACC";
+  renderGroup("main-tbody", "main-qty-badge", rows.filter(isMain));
+  renderGroup("acc-tbody", "acc-qty-badge", rows.filter(isAcc));
+}
+
+function renderGroup(tbodyId, badgeId, rows) {
   const byColor = {};
   rows.forEach(o => {
     const key = `${o.상품명}|||${o.옵션명}`;
@@ -35,7 +42,8 @@ function render() {
   });
   const list = Object.values(byColor).sort((a, b) => b.qty - a.qty);
 
-  $("color-tbody").innerHTML = list.map(c => `
+  $(badgeId).textContent = `(총 ${rows.reduce((s, o) => s + (o.수량 || 0), 0)}개)`;
+  $(tbodyId).innerHTML = list.map(c => `
     <tr><td>${c.상품명 ?? ""}</td><td>${c.옵션명 ?? ""}</td><td>${c.count}</td><td>${c.qty}</td></tr>
   `).join("") || `<tr><td colspan="4" style="color:#999;">데이터 없음</td></tr>`;
 }

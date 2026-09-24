@@ -35,10 +35,16 @@
         <div class="stat-tile"><div class="label">총 주문금액</div><div class="value" id="stat-amount">-</div></div>
       </div>
 
-      <h2>컬러별 판매 현황</h2>
+      <h2>메인 제품별 판매 현황 <span id="main-qty-badge" style="font-weight:400;font-size:13px;color:#777;"></span></h2>
       <table>
         <thead><tr><th>상품명</th><th>옵션명(컬러)</th><th>건수</th><th>수량</th></tr></thead>
-        <tbody id="color-tbody"></tbody>
+        <tbody id="main-tbody"></tbody>
+      </table>
+
+      <h2 style="margin-top:24px;">액세서리(ACC)별 판매 현황 <span id="acc-qty-badge" style="font-weight:400;font-size:13px;color:#777;"></span></h2>
+      <table>
+        <thead><tr><th>상품명</th><th>옵션명</th><th>건수</th><th>수량</th></tr></thead>
+        <tbody id="acc-tbody"></tbody>
       </table>
     </div>
   </main>
