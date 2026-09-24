@@ -24,6 +24,7 @@
 
 <div id="app" class="hidden">
   <div id="staff-corner">
+    <button id="switch-expo-btn" title="박람회 변경" class="hidden">🔁</button>
     <a href="admin.html" title="관리자">🔒</a>
     <button id="logout-btn" title="로그아웃">⎋</button>
   </div>
@@ -40,7 +41,12 @@
       </div>
     </div>
 
-    <div class="card">
+    <div id="expo-picker" class="card hidden">
+      <h2>진행 중인 박람회를 선택하세요</h2>
+      <div id="expo-picker-list"></div>
+    </div>
+
+    <div id="order-card" class="card">
       <h2 id="form-title">주문 입력</h2>
 
       <div class="zone zone-customer">

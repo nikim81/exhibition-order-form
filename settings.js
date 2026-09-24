@@ -80,7 +80,6 @@ function fillFormFromState() {
 }
 
 async function activateExpo(id) {
-  await sb.from("exhibitions").update({ is_active: false }).neq("id", id);
   await sb.from("exhibitions").update({ is_active: true }).eq("id", id);
   await loadExhibitionList();
   if (currentId === id) state.is_active = true, $("s-활성").checked = true;
@@ -306,6 +305,7 @@ $("save-btn").addEventListener("click", async () => {
     박람회명: state.박람회명,
     시작일: state.시작일,
     종료일: state.종료일,
+    is_active: state.is_active,
     판매제품: state.판매제품,
     사은품: state.사은품,
     묶음구성: state.묶음구성,
@@ -320,10 +320,6 @@ $("save-btn").addEventListener("click", async () => {
     error = res.error;
     newId = res.data?.id;
     if (newId) currentId = newId;
-  }
-  if (!error && state.is_active && currentId) {
-    await sb.from("exhibitions").update({ is_active: false }).neq("id", currentId);
-    await sb.from("exhibitions").update({ is_active: true }).eq("id", currentId);
   }
   $("save-msg").textContent = error ? error.message : "저장 완료";
   if (!error) setTimeout(() => $("save-msg").textContent = "", 2000);

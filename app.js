@@ -198,12 +198,53 @@ function renderAll() {
 }
 renderAll();
 
-async function loadSettings() {
-  const { data, error } = await sb.from("exhibitions").select("*").eq("is_active", true).limit(1).single();
-  if (error || !data) return;
-  settings = data;
-  activeProducts = (data.판매제품 && data.판매제품.length) ? data.판매제품 : PRODUCTS;
+let activeExhibitions = [];
+
+function applyExhibition(exp) {
+  settings = exp;
+  activeProducts = (exp.판매제품 && exp.판매제품.length) ? exp.판매제품 : PRODUCTS;
 }
+
+// returns true once an exhibition is resolved and the order form can render;
+// false while the picker is shown and waiting for the staff to choose.
+async function loadSettings() {
+  const { data, error } = await sb.from("exhibitions").select("*").eq("is_active", true);
+  activeExhibitions = (!error && data) ? data : [];
+  $("switch-expo-btn").classList.toggle("hidden", activeExhibitions.length <= 1);
+  if (activeExhibitions.length === 0) return true;
+  if (activeExhibitions.length === 1) { applyExhibition(activeExhibitions[0]); return true; }
+
+  const savedId = localStorage.getItem("selectedExpoId");
+  const saved = activeExhibitions.find(e => e.id === savedId);
+  if (saved) { applyExhibition(saved); return true; }
+
+  showExpoPicker();
+  return false;
+}
+
+function showExpoPicker() {
+  $("order-card").classList.add("hidden");
+  $("expo-picker").classList.remove("hidden");
+  $("expo-picker-list").innerHTML = activeExhibitions.map(e => `
+    <button type="button" class="ghost expo-pick-btn" data-id="${e.id}" style="display:block;width:100%;margin-bottom:8px;">${e.박람회명}</button>
+  `).join("");
+  $("expo-picker-list").querySelectorAll("[data-id]").forEach(b => {
+    b.addEventListener("click", () => {
+      const exp = activeExhibitions.find(e => e.id === b.dataset.id);
+      localStorage.setItem("selectedExpoId", exp.id);
+      applyExhibition(exp);
+      $("expo-picker").classList.add("hidden");
+      $("order-card").classList.remove("hidden");
+      resetForm();
+      loadEditFromUrl();
+    });
+  });
+}
+
+$("switch-expo-btn").addEventListener("click", () => {
+  localStorage.removeItem("selectedExpoId");
+  showExpoPicker();
+});
 
 $("f-연락처").addEventListener("input", () => {
   const digits = $("f-연락처").value.replace(/\D/g, "").slice(0, 11);
@@ -385,9 +426,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
     if (event === "SIGNED_IN") { location.href = "admin.html"; return; }
     $("login-card").classList.add("hidden");
     $("app").classList.remove("hidden");
-    await loadSettings();
-    resetForm();
-    loadEditFromUrl();
+    const ready = await loadSettings();
+    if (ready) { resetForm(); loadEditFromUrl(); }
   } else {
     $("app").classList.add("hidden");
     $("login-card").classList.remove("hidden");
