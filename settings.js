@@ -25,7 +25,9 @@ async function loadExhibitionList() {
 }
 
 function renderExpoList() {
-  $("expo-list").innerHTML = exhibitions.map(e => `
+  const month = $("expo-month-filter").value; // "YYYY-MM", 비워두면 전체
+  const list = month ? exhibitions.filter(e => (e.시작일 || "").slice(0, 7) === month) : exhibitions;
+  $("expo-list").innerHTML = list.map(e => `
     <div class="expo-card ${e.is_active ? "active" : ""}">
       <span>${e.박람회명}${e.is_active ? '<span class="badge">● 활성</span>' : ""}
         <span style="color:#999;"> · ${e.시작일 || "?"} ~ ${e.종료일 || "?"}</span>
@@ -35,7 +37,7 @@ function renderExpoList() {
         <button data-toggle="${e.id}" data-next="${!e.is_active}">${e.is_active ? "비활성화" : "활성화"}</button>
         <button data-del="${e.id}">삭제</button>
       </span>
-    </div>`).join("") || `<div style="color:#999;font-size:13px;">등록된 박람회 없음. "+ 새 박람회"로 추가하세요.</div>`;
+    </div>`).join("") || `<div style="color:#999;font-size:13px;">${month ? "이 달에 등록된" : "등록된"} 박람회 없음. "+ 새 박람회"로 추가하세요.</div>`;
 
   $("expo-list").querySelectorAll("[data-edit]").forEach(b =>
     b.addEventListener("click", () => selectExpo(b.dataset.edit)));
@@ -328,10 +330,13 @@ $("save-btn").addEventListener("click", async () => {
 
 $("logout-btn").addEventListener("click", () => sb.auth.signOut());
 
+$("expo-month-filter").addEventListener("change", renderExpoList);
+
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { location.href = "index.html"; return; }
   $("app").classList.remove("hidden");
+  $("expo-month-filter").value = new Date().toISOString().slice(0, 7);
   fillProductSelects();
   await loadBundleTemplates();
   await loadExhibitionList();

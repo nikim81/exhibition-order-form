@@ -43,7 +43,10 @@
     <div class="card">
       <div class="card-header">
         <h2>박람회 목록</h2>
-        <button class="ghost" id="new-expo-btn">+ 새 박람회</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="month" id="expo-month-filter" style="width:auto;">
+          <button class="ghost" id="new-expo-btn">+ 새 박람회</button>
+        </div>
       </div>
       <div id="expo-list"></div>
     </div>
