@@ -348,6 +348,7 @@ $("submit-btn").addEventListener("click", async () => {
     const { error } = await sb.from("orders").update(row).eq("id", editingId);
     if (error) return $("err").textContent = error.message;
     history.replaceState(null, "", "index.html");
+    alert("주문이 수정되었습니다.");
   } else {
     const 주문번호 = genOrderNo();
     const { data: { user } } = await sb.auth.getUser();
@@ -360,6 +361,7 @@ $("submit-btn").addEventListener("click", async () => {
     }));
     const { error } = await sb.from("orders").insert(rows);
     if (error) return $("err").textContent = error.message;
+    alert("주문이 접수되었습니다!");
   }
   resetForm();
 });
