@@ -49,6 +49,7 @@ function renderGroup(tbodyId, badgeId, rows) {
 }
 
 $("expo-select").addEventListener("change", render);
+$("refresh-btn").addEventListener("click", loadOrders);
 $("logout-btn").addEventListener("click", () => sb.auth.signOut());
 
 sb.channel("orders-changes-sales")
