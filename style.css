@@ -10,6 +10,8 @@ main { max-width: 960px; margin: 20px auto; padding: 0 16px; }
 #login-card { max-width: 360px; margin: 80px auto; }
 label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
 input, select, textarea { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; flex-shrink: 0; }
+button, .swatch, .tier-btn, select, input[type="checkbox"], input[type="radio"] { touch-action: manipulation; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .row3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
 button { transition: transform .08s ease, filter .08s ease; }
