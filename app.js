@@ -298,6 +298,7 @@ function resetForm() {
   $("f-상세주소").value = "";
   $("f-배송메세지").value = "";
   $("f-동의").checked = false;
+  $("f-마케팅동의").checked = false;
   $("err").textContent = "";
 }
 
@@ -319,6 +320,7 @@ function commonFields() {
     배송희망일자: null,
     배송메세지: $("f-배송메세지").value.trim(),
     개인정보동의: $("f-동의").checked,
+    마케팅동의: $("f-마케팅동의").checked,
   };
 }
 
@@ -401,6 +403,7 @@ function startEdit(order) {
   $("f-상세주소").value = "";
   $("f-배송메세지").value = order.배송메세지 || "";
   $("f-동의").checked = !!order.개인정보동의;
+  $("f-마케팅동의").checked = !!order.마케팅동의;
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
