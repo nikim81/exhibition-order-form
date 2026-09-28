@@ -12,6 +12,8 @@
   .stat-tile .label { font-size: 12px; color: #777; }
   .stat-tile .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
   #expo-select { max-width: 260px; margin-bottom: 16px; }
+  .expo-summary-row { cursor: pointer; }
+  .expo-summary-row:hover { background: #f9fafb; }
 </style>
 </head>
 <body>
@@ -25,6 +27,14 @@
     </div>
   </header>
   <main>
+    <div class="card">
+      <h2>박람회별 요약 (전체 매출 비교)</h2>
+      <table>
+        <thead><tr><th>박람회</th><th>건수</th><th>수량</th><th>매출액</th></tr></thead>
+        <tbody id="expo-summary-tbody"></tbody>
+      </table>
+    </div>
+
     <div class="card">
       <label>박람회 선택</label>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
