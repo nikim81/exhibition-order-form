@@ -58,6 +58,7 @@ async function deleteOrder(id) {
 }
 
 $("search").addEventListener("input", renderTable);
+$("search-btn").addEventListener("click", renderTable);
 $("expo-filter").addEventListener("change", renderTable);
 $("refresh-btn").addEventListener("click", loadOrders);
 
