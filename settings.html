@@ -25,6 +25,9 @@
   .expo-card.active { border-color: #059669; background: #f0fdf4; }
   .expo-card .badge { font-size: 11px; color: #059669; font-weight: 700; margin-left: 6px; }
   .expo-card .actions button { font-size: 12px; padding: 5px 10px; margin-left: 6px; cursor: pointer; }
+  .month-chip { font-size: 12px; padding: 5px 10px; border-radius: 999px; border: 1px solid #e5e7eb; background: #f9fafb; cursor: pointer; }
+  .month-chip.current { border-color: #2563eb; background: #eff6ff; color: #2563eb; font-weight: 600; }
+  .month-chip[data-count="0"] { color: #bbb; }
   .price-input { width: 90px !important; margin-left: auto; font-size: 12px !important; padding: 4px 6px !important; }
   .opt-row { justify-content: flex-start; }
 </style>
@@ -48,6 +51,7 @@
           <button class="ghost" id="new-expo-btn">+ 새 박람회</button>
         </div>
       </div>
+      <div id="month-chip-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
       <div id="expo-list"></div>
     </div>
 

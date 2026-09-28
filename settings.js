@@ -45,6 +45,26 @@ function renderExpoList() {
     b.addEventListener("click", () => setExpoActive(b.dataset.toggle, b.dataset.next === "true")));
   $("expo-list").querySelectorAll("[data-del]").forEach(b =>
     b.addEventListener("click", () => deleteExpo(b.dataset.del)));
+
+  renderMonthChips(month);
+}
+
+// 박람회가 있는 달을 한눈에 보여주는 목록 (네이티브 <input type="month"> 팝업은 커스터마이징이 안 돼서 별도 목록으로 대체)
+function renderMonthChips(currentMonth) {
+  const counts = {};
+  exhibitions.forEach(e => {
+    const m = (e.시작일 || "").slice(0, 7);
+    if (m) counts[m] = (counts[m] || 0) + 1;
+  });
+  if (currentMonth && !(currentMonth in counts)) counts[currentMonth] = 0;
+  const months = Object.keys(counts).sort();
+
+  $("month-chip-list").innerHTML = months.map(m => {
+    const [y, mo] = m.split("-");
+    return `<button type="button" class="month-chip${m === currentMonth ? " current" : ""}" data-month="${m}" data-count="${counts[m]}">${y}.${mo} (${counts[m]})</button>`;
+  }).join("");
+  $("month-chip-list").querySelectorAll("[data-month]").forEach(b =>
+    b.addEventListener("click", () => { $("expo-month-filter").value = b.dataset.month; renderExpoList(); }));
 }
 
 function selectExpo(id) {
