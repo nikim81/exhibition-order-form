@@ -20,6 +20,16 @@
 </head>
 <body>
 
+<div id="pin-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000;">
+  <div style="background:#fff;border-radius:10px;padding:24px;width:min(320px,90vw);">
+    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">관리자 비밀번호를 입력하세요</label>
+    <input type="password" id="pin-input" inputmode="numeric" autocomplete="off" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:4px;font-size:14px;box-sizing:border-box;">
+    <div id="pin-err" style="color:#dc2626;font-size:13px;min-height:18px;margin-top:6px;"></div>
+    <button class="primary" id="pin-submit-btn" style="width:100%;margin:8px 0 0;">확인</button>
+    <a href="index.html" style="display:block;text-align:center;font-size:13px;color:#777;margin-top:10px;">취소</a>
+  </div>
+</div>
+
 <div id="app" class="hidden">
   <header>
     <h1>관리자</h1>
@@ -42,19 +52,39 @@
 <script src="client.js"></script>
 <script>
   document.getElementById("logout-btn").addEventListener("click", () => sb.auth.signOut());
+
+  // 로그인된 스태프 중에서도 관리자 메뉴 진입을 한 번 더 막는 간단한 PIN (입력값은 password 타입이라 화면에 노출 안 됨).
+  // 주문 입력(index.html)에서 넘어올 때만 물어보고, 세팅/주문목록/판매현황에서 "☰ 메뉴"로
+  // 돌아올 때는 다시 안 물어봄 (index.html이 이 값을 매번 지워서, 거길 거쳐야 재입력됨).
+  function askAdminPin() {
+    return new Promise((resolve) => {
+      if (sessionStorage.getItem("adminUnlocked") === "1") { resolve(); return; }
+      const modal = document.getElementById("pin-modal");
+      const input = document.getElementById("pin-input");
+      const err = document.getElementById("pin-err");
+      modal.classList.remove("hidden");
+      input.focus();
+
+      function submit() {
+        if (input.value === "025118888") {
+          sessionStorage.setItem("adminUnlocked", "1");
+          modal.classList.add("hidden");
+          resolve();
+        } else {
+          err.textContent = "비밀번호가 올바르지 않습니다.";
+          input.value = "";
+          input.focus();
+        }
+      }
+      document.getElementById("pin-submit-btn").addEventListener("click", submit);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+    });
+  }
+
   (async () => {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { location.href = "index.html"; return; }
-
-    // 로그인된 스태프 중에서도 관리자 메뉴 진입을 한 번 더 막는 간단한 PIN.
-    // 주문 입력(index.html)에서 넘어올 때만 물어보고, 세팅/주문목록/판매현황에서 "☰ 메뉴"로
-    // 돌아올 때는 다시 안 물어봄 (index.html이 이 값을 매번 지워서, 거길 거쳐야 재입력됨).
-    if (sessionStorage.getItem("adminUnlocked") !== "1") {
-      const pw = prompt("관리자 비밀번호를 입력하세요");
-      if (pw !== "025118888") { alert("비밀번호가 올바르지 않습니다."); location.href = "index.html"; return; }
-      sessionStorage.setItem("adminUnlocked", "1");
-    }
-
+    await askAdminPin();
     document.getElementById("app").classList.remove("hidden");
   })();
 </script>
