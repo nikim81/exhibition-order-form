@@ -53,7 +53,9 @@
 <script>
   document.getElementById("logout-btn").addEventListener("click", () => sb.auth.signOut());
 
-  // 로그인된 스태프 중에서도 관리자 메뉴 진입을 한 번 더 막는 간단한 PIN (입력값은 password 타입이라 화면에 노출 안 됨).
+  // 로그인된 스태프 중에서도 관리자 메뉴 진입을 한 번 더 막는 간단한 PIN.
+  // 실제 PIN 값은 클라이언트 코드에 없고, DB의 verify_admin_pin() 함수가 서버 쪽에서만 대조함
+  // (개발자도구로 소스를 봐도 PIN이 노출되지 않음).
   // 주문 입력(index.html)에서 넘어올 때만 물어보고, 세팅/주문목록/판매현황에서 "☰ 메뉴"로
   // 돌아올 때는 다시 안 물어봄 (index.html이 이 값을 매번 지워서, 거길 거쳐야 재입력됨).
   function askAdminPin() {
@@ -62,11 +64,15 @@
       const modal = document.getElementById("pin-modal");
       const input = document.getElementById("pin-input");
       const err = document.getElementById("pin-err");
+      const submitBtn = document.getElementById("pin-submit-btn");
       modal.classList.remove("hidden");
       input.focus();
 
-      function submit() {
-        if (input.value === "025118888") {
+      async function submit() {
+        submitBtn.disabled = true;
+        const { data, error } = await sb.rpc("verify_admin_pin", { input: input.value });
+        submitBtn.disabled = false;
+        if (!error && data === true) {
           sessionStorage.setItem("adminUnlocked", "1");
           modal.classList.add("hidden");
           resolve();
