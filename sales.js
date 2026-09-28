@@ -72,7 +72,10 @@ function renderGroup(tbodyId, badgeId, rows) {
 
 $("expo-select").addEventListener("change", render);
 $("refresh-btn").addEventListener("click", loadOrders);
-$("logout-btn").addEventListener("click", () => sb.auth.signOut());
+$("logout-btn").addEventListener("click", async () => {
+  await sb.auth.signOut();
+  location.href = "index.html";
+});
 
 sb.channel("orders-changes-sales")
   .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, loadOrders)

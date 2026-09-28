@@ -348,7 +348,10 @@ $("save-btn").addEventListener("click", async () => {
   await loadExhibitionList();
 });
 
-$("logout-btn").addEventListener("click", () => sb.auth.signOut());
+$("logout-btn").addEventListener("click", async () => {
+  await sb.auth.signOut();
+  location.href = "index.html";
+});
 
 $("expo-month-filter").addEventListener("change", renderExpoList);
 

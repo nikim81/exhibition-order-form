@@ -97,7 +97,10 @@ $("export-btn").addEventListener("click", async () => {
   XLSX.writeFile(wb, `사방넷_출고요청서_${expoLabel}_${today()}.xlsx`);
 });
 
-$("logout-btn").addEventListener("click", () => sb.auth.signOut());
+$("logout-btn").addEventListener("click", async () => {
+  await sb.auth.signOut();
+  location.href = "index.html";
+});
 
 // realtime: pick up orders entered from other devices
 sb.channel("orders-changes")

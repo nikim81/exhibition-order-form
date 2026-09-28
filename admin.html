@@ -64,7 +64,10 @@
 
 <script src="client.js"></script>
 <script>
-  document.getElementById("logout-btn").addEventListener("click", () => sb.auth.signOut());
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    location.href = "index.html";
+  });
 
   document.getElementById("pw-change-btn").addEventListener("click", () => {
     document.getElementById("pw-new").value = "";
