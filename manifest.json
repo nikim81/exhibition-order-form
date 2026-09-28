@@ -1,0 +1,12 @@
+{
+  "name": "유팡 박람회 주문",
+  "short_name": "유팡 박람회",
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#f6f4ef",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    { "src": "images/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
