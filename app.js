@@ -18,6 +18,8 @@ let giftDelivery = "현장"; // "현장" | "배송"
 
 function tierProducts() { return activeProducts.filter(p => p.name === TIER_NAME[currentTier]); }
 function accProducts() { return activeProducts.filter(p => p.name === "ACC"); }
+function tierHasProducts(tier) { return activeProducts.some(p => p.name === TIER_NAME[tier]); }
+function firstAvailableTier() { return Object.keys(TIER_NAME).find(tierHasProducts) || "단품"; }
 
 function priceFor(code, option) {
   const p = activeProducts.find(x => x.code === code && x.option === option);
@@ -26,7 +28,10 @@ function priceFor(code, option) {
 
 // ---- 1단: 소독기 (단품/3종/4종 탭 + 단일 컬러 선택 후 "담기") ----
 function renderTierTabs() {
-  $("tier-tabs").querySelectorAll(".tier-btn").forEach(b => b.classList.toggle("active", b.dataset.tier === currentTier));
+  $("tier-tabs").querySelectorAll(".tier-btn").forEach(b => {
+    b.classList.toggle("hidden", !tierHasProducts(b.dataset.tier));
+    b.classList.toggle("active", b.dataset.tier === currentTier);
+  });
 }
 $("tier-tabs").querySelectorAll(".tier-btn").forEach(b => {
   b.addEventListener("click", () => {
@@ -288,7 +293,7 @@ function resetForm() {
   $("expo-name").textContent = settings.박람회명 || "박람회";
   $("f-주문일").value = today();
   cart.clear();
-  currentTier = "단품";
+  currentTier = firstAvailableTier();
   currentColorKey = null;
   currentGiftKey = null;
   currentGiftCartKey = null;
