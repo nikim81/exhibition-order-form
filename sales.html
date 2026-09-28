@@ -36,10 +36,14 @@
     </div>
 
     <div class="card">
-      <label>박람회 선택</label>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
-        <select id="expo-select" style="flex:1;margin-bottom:0;"></select>
-        <button class="ghost" id="refresh-btn">새로고침</button>
+      <div class="card-header">
+        <h2>박람회 상세</h2>
+        <div class="right">
+          <button class="ghost" id="refresh-btn">새로고침</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <select id="expo-select"></select>
       </div>
 
       <div class="stat-row">

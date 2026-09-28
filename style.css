@@ -48,6 +48,8 @@ tbody tr:hover { background: #f8fafc; }
 .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .card-header h2 { margin: 0; font-size: 16px; }
 .card-header button, .card-header select, .card-header input, .card-header a { flex-shrink: 0; white-space: nowrap; }
+.card-header .right { display: flex; gap: 8px; align-items: center; }
+.filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
 #count-badge { font-size: 13px; color: var(--ink-soft); font-weight: 400; }
 .hidden { display: none !important; }
 .swatch-grid { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin-top: 6px; }
