@@ -67,7 +67,7 @@ function renderAccAvailability() {
   const enabled = currentTier === "단품";
   $("acc-grid").classList.toggle("disabled", !enabled);
   $("acc-label").textContent = enabled
-    ? "선택2. 액세서리 (별도 구매 시, 선택 안 해도 됨)"
+    ? "선택2. 액세서리 (별도 구매 시)"
     : "선택2. 액세서리 (3종/4종에 이미 포함되어 있어요)";
 }
 
