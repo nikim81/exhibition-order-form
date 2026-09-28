@@ -254,6 +254,9 @@ $("f-연락처").addEventListener("input", () => {
   $("f-연락처").value = formatted;
 });
 
+$("f-계좌이체").addEventListener("change", () => { if ($("f-계좌이체").checked) $("f-카드결제").checked = false; });
+$("f-카드결제").addEventListener("change", () => { if ($("f-카드결제").checked) $("f-계좌이체").checked = false; });
+
 function closeAddrModal() {
   $("addr-modal").classList.add("hidden");
   $("addr-embed").innerHTML = "";
@@ -297,6 +300,8 @@ function resetForm() {
   $("f-주소").value = "";
   $("f-상세주소").value = "";
   $("f-배송메세지").value = "";
+  $("f-계좌이체").checked = false;
+  $("f-카드결제").checked = false;
   $("f-동의").checked = false;
   $("f-마케팅동의").checked = false;
   $("err").textContent = "";
@@ -319,6 +324,7 @@ function commonFields() {
     주소: `${$("f-주소").value.trim()} ${$("f-상세주소").value.trim()}`.trim(),
     배송희망일자: null,
     배송메세지: $("f-배송메세지").value.trim(),
+    결제방법: $("f-계좌이체").checked ? "계좌이체" : $("f-카드결제").checked ? "카드결제" : "",
     개인정보동의: $("f-동의").checked,
     마케팅동의: $("f-마케팅동의").checked,
   };
@@ -402,6 +408,8 @@ function startEdit(order) {
   $("f-주소").value = order.주소 || "";
   $("f-상세주소").value = "";
   $("f-배송메세지").value = order.배송메세지 || "";
+  $("f-계좌이체").checked = order.결제방법 === "계좌이체";
+  $("f-카드결제").checked = order.결제방법 === "카드결제";
   $("f-동의").checked = !!order.개인정보동의;
   $("f-마케팅동의").checked = !!order.마케팅동의;
   window.scrollTo({ top: 0, behavior: "smooth" });
