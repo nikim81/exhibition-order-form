@@ -30,10 +30,23 @@
   </div>
 </div>
 
+<div id="pw-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000;">
+  <div style="background:#fff;border-radius:10px;padding:24px;width:min(320px,90vw);">
+    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">새 비밀번호</label>
+    <input type="password" id="pw-new" autocomplete="new-password" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:4px;font-size:14px;box-sizing:border-box;">
+    <label style="display:block;font-size:13px;font-weight:600;margin:12px 0 8px;">새 비밀번호 확인</label>
+    <input type="password" id="pw-confirm" autocomplete="new-password" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:4px;font-size:14px;box-sizing:border-box;">
+    <div id="pw-err" style="color:#dc2626;font-size:13px;min-height:18px;margin-top:6px;"></div>
+    <button class="primary" id="pw-submit-btn" style="width:100%;margin:8px 0 0;">변경</button>
+    <a href="#" id="pw-cancel-btn" style="display:block;text-align:center;font-size:13px;color:#777;margin-top:10px;">취소</a>
+  </div>
+</div>
+
 <div id="app" class="hidden">
   <header>
     <h1>관리자</h1>
     <div id="userbar">
+      <button id="pw-change-btn">비밀번호 변경</button>
       <button id="logout-btn">로그아웃</button>
     </div>
   </header>
@@ -52,6 +65,29 @@
 <script src="client.js"></script>
 <script>
   document.getElementById("logout-btn").addEventListener("click", () => sb.auth.signOut());
+
+  document.getElementById("pw-change-btn").addEventListener("click", () => {
+    document.getElementById("pw-new").value = "";
+    document.getElementById("pw-confirm").value = "";
+    document.getElementById("pw-err").textContent = "";
+    document.getElementById("pw-modal").classList.remove("hidden");
+    document.getElementById("pw-new").focus();
+  });
+  document.getElementById("pw-cancel-btn").addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("pw-modal").classList.add("hidden");
+  });
+  document.getElementById("pw-submit-btn").addEventListener("click", async () => {
+    const pw = document.getElementById("pw-new").value;
+    const confirm = document.getElementById("pw-confirm").value;
+    const err = document.getElementById("pw-err");
+    if (pw.length < 8) { err.textContent = "비밀번호는 8자 이상이어야 합니다."; return; }
+    if (pw !== confirm) { err.textContent = "두 비밀번호가 서로 다릅니다."; return; }
+    const { error } = await sb.auth.updateUser({ password: pw });
+    if (error) { err.textContent = error.message; return; }
+    document.getElementById("pw-modal").classList.add("hidden");
+    alert("비밀번호가 변경되었습니다.");
+  });
 
   // 로그인된 스태프 중에서도 관리자 메뉴 진입을 한 번 더 막는 간단한 PIN.
   // 실제 PIN 값은 클라이언트 코드에 없고, DB의 verify_admin_pin() 함수가 서버 쪽에서만 대조함
