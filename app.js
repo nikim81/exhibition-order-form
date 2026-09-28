@@ -84,6 +84,7 @@ $("steril-add-btn").addEventListener("click", () => {
   currentColorKey = null;
   $("steril-qty").value = 1;
   renderSterilizerGrid();
+  renderGiftSection();
   renderCart();
 });
 
@@ -131,6 +132,12 @@ function giftProducts() {
   return (settings.사은품 || []).map(g => PRODUCTS.find(x => x.code === g.code && x.option === g.option) || g);
 }
 
+// 사은품은 소독기 본품 구매 사은품이라, 선택1에서 담은 소독기가 있어야만 선택 가능
+function hasSterilizerInCart() {
+  const tierNames = Object.values(TIER_NAME);
+  return [...cart.values()].some(it => tierNames.includes(it.name));
+}
+
 function addGiftToCart() {
   const [code, option] = currentGiftKey.split("|||");
   const p = giftProducts().find(x => x.code === code && x.option === option);
@@ -149,6 +156,15 @@ function addGiftToCart() {
 }
 
 function renderGiftSection() {
+  const eligible = hasSterilizerInCart();
+  if (!eligible && currentGiftCartKey) {
+    cart.delete(currentGiftCartKey);
+    currentGiftCartKey = null;
+    currentGiftKey = null;
+  }
+  $("gift-grid").classList.toggle("disabled", !eligible);
+  $("gift-label").textContent = eligible ? "선택3. 사은품" : "선택3. 사은품 (선택1 소독기를 먼저 담아주세요)";
+
   const grid = $("gift-grid");
   const products = giftProducts();
   grid.innerHTML = products.map(p => {
