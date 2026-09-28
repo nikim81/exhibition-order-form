@@ -34,11 +34,11 @@ function renderTable() {
   $("count-badge").textContent = `(${rows.length}/${orders.length}건)`;
   $("tbody").innerHTML = rows.map(o => `
     <tr>
-      <td>${o.판매처 ?? ""}</td><td>${o.주문번호 ?? ""}</td><td>${o.주문일 ?? ""}</td>
-      <td>${o.상품명 ?? ""}</td><td>${o.상품코드 ?? ""}</td><td>${o.옵션명 ?? ""}</td>
-      <td>${o.수량 ?? ""}</td><td>${o.주문금액 ?? ""}</td><td>${o.업체명 ?? ""}</td>
-      <td>${o.수취인 ?? ""}</td><td>${o.연락처 ?? ""}</td><td>${o.우편번호 ?? ""}</td>
-      <td>${o.주소 ?? ""}</td><td>${o.배송희망일자 ?? ""}</td><td>${o.배송메세지 ?? ""}</td>
+      <td>${esc(o.판매처)}</td><td>${esc(o.주문번호)}</td><td>${esc(o.주문일)}</td>
+      <td>${esc(o.상품명)}</td><td>${esc(o.상품코드)}</td><td>${esc(o.옵션명)}</td>
+      <td>${o.수량 ?? ""}</td><td>${o.주문금액 ?? ""}</td><td>${esc(o.업체명)}</td>
+      <td>${esc(o.수취인)}</td><td>${esc(o.연락처)}</td><td>${esc(o.우편번호)}</td>
+      <td>${esc(o.주소)}</td><td>${esc(o.배송희망일자)}</td><td>${esc(o.배송메세지)}</td>
       <td class="actions">
         <button data-edit="${o.id}">수정</button>
         <button data-del="${o.id}">삭제</button>
