@@ -1,4 +1,5 @@
 const $ = (id) => document.getElementById(id);
+sessionStorage.removeItem("adminUnlocked"); // 주문 입력 화면을 거치면 관리자 PIN을 다시 물어보게 함
 let editingId = null;
 let editMode = false;
 let settings = { 박람회명: "박람회", 판매제품: [] };

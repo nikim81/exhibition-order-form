@@ -46,9 +46,14 @@
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { location.href = "index.html"; return; }
 
-    // 로그인된 스태프 중에서도 관리자 메뉴 진입을 한 번 더 막는 간단한 PIN (매번 재입력 요구)
-    const pw = prompt("관리자 비밀번호를 입력하세요");
-    if (pw !== "025118888") { alert("비밀번호가 올바르지 않습니다."); location.href = "index.html"; return; }
+    // 로그인된 스태프 중에서도 관리자 메뉴 진입을 한 번 더 막는 간단한 PIN.
+    // 주문 입력(index.html)에서 넘어올 때만 물어보고, 세팅/주문목록/판매현황에서 "☰ 메뉴"로
+    // 돌아올 때는 다시 안 물어봄 (index.html이 이 값을 매번 지워서, 거길 거쳐야 재입력됨).
+    if (sessionStorage.getItem("adminUnlocked") !== "1") {
+      const pw = prompt("관리자 비밀번호를 입력하세요");
+      if (pw !== "025118888") { alert("비밀번호가 올바르지 않습니다."); location.href = "index.html"; return; }
+      sessionStorage.setItem("adminUnlocked", "1");
+    }
 
     document.getElementById("app").classList.remove("hidden");
   })();
