@@ -365,6 +365,10 @@ $("submit-btn").addEventListener("click", async () => {
     $("err").textContent = "상품을 1개 이상 선택하세요.";
     return;
   }
+  if (!$("f-계좌이체").checked && !$("f-카드결제").checked) {
+    $("err").textContent = "결제 방법(계좌이체 또는 카드결제)을 선택하세요.";
+    return;
+  }
   $("err").textContent = "";
   const common = commonFields();
 
