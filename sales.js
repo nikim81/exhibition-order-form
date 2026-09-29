@@ -17,14 +17,19 @@ function fillExpoSelect() {
   sel.value = expos.includes(prev) ? prev : "";
 }
 
+const isGift = (o) => (o.상품명 || "").startsWith("[사은품]");
+
 function render() {
   const expo = $("expo-select").value;
   const rows = expo ? orders.filter(o => o.판매처 === expo) : orders;
+  const saleRows = rows.filter(o => !isGift(o));
+  const giftRows = rows.filter(isGift);
 
-  $("stat-count").textContent = `${rows.length}건`;
-  $("stat-qty").textContent = `${rows.reduce((s, o) => s + (o.수량 || 0), 0)}개`;
-  const totalAmount = rows.reduce((s, o) => s + (Number(o.주문금액) || 0), 0);
+  $("stat-count").textContent = `${saleRows.length}건`;
+  $("stat-qty").textContent = `${saleRows.reduce((s, o) => s + (o.수량 || 0), 0)}개`;
+  const totalAmount = saleRows.reduce((s, o) => s + (Number(o.주문금액) || 0), 0);
   $("stat-amount").textContent = `${totalAmount.toLocaleString()}원`;
+  $("stat-gift-count").textContent = `${giftRows.length}건`;
 
   const isMain = (o) => (o.상품명 || "").includes("시그니처2플러스");
   const isAcc = (o) => o.상품명 === "ACC";
@@ -35,7 +40,7 @@ function render() {
 
 function renderExpoSummary() {
   const byExpo = {};
-  orders.forEach(o => {
+  orders.filter(o => !isGift(o)).forEach(o => {
     const name = o.판매처 || "(미지정)";
     if (!byExpo[name]) byExpo[name] = { count: 0, qty: 0, amount: 0 };
     byExpo[name].count += 1;
