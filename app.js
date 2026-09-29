@@ -71,8 +71,13 @@ function renderAccAvailability() {
     : "선택2. 액세서리 (3종/4종에 이미 포함되어 있어요)";
 }
 
+function showErr(msg) {
+  $("err").textContent = `⚠ ${msg}`;
+  $("err").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 $("steril-add-btn").addEventListener("click", () => {
-  if (!currentColorKey) { $("err").textContent = "소독기 컬러를 선택하세요."; return; }
+  if (!currentColorKey) { showErr("소독기 컬러를 선택하세요."); return; }
   $("err").textContent = "";
   const [code, option] = currentColorKey.split("|||");
   const p = tierProducts().find(x => x.code === code && x.option === option);
@@ -354,19 +359,19 @@ function commonFields() {
 
 $("submit-btn").addEventListener("click", async () => {
   if (!$("f-수취인").value.trim() || !$("f-연락처").value.trim() || !$("f-주소").value.trim()) {
-    $("err").textContent = "수취인, 연락처, 주소는 필수입니다.";
+    showErr("수취인, 연락처, 주소는 필수입니다.");
     return;
   }
   if (!$("f-동의").checked) {
-    $("err").textContent = "개인정보 수집·이용에 동의해야 주문을 저장할 수 있습니다.";
+    showErr("개인정보 수집·이용에 동의해야 주문을 저장할 수 있습니다.");
     return;
   }
   if (cart.size === 0) {
-    $("err").textContent = "상품을 1개 이상 선택하세요.";
+    showErr("상품을 1개 이상 선택하세요.");
     return;
   }
   if (!$("f-계좌이체").checked && !$("f-카드결제").checked) {
-    $("err").textContent = "결제 방법(계좌이체 또는 카드결제)을 선택하세요.";
+    showErr("결제 방법(계좌이체 또는 카드결제)을 선택하세요.");
     return;
   }
   $("err").textContent = "";

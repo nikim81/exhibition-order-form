@@ -45,6 +45,7 @@ tbody tr:hover { background: #f8fafc; }
 #table-wrap th:first-child, #table-wrap td:first-child { padding-left: 14px; }
 .actions button { font-size: 12px; padding: 5px 10px; margin-right: 4px; cursor: pointer; border-radius: 6px; }
 #err { color: #dc2626; font-size: 13px; min-height: 18px; }
+#err:not(:empty) { color: #b91c1c; font-size: 14px; font-weight: 700; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
 .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .card-header h2 { margin: 0; font-size: 16px; }
 .card-header button, .card-header select, .card-header input, .card-header a { flex-shrink: 0; white-space: nowrap; }
