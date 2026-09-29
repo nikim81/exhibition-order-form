@@ -30,6 +30,8 @@ function render() {
   const totalAmount = saleRows.reduce((s, o) => s + (Number(o.주문금액) || 0), 0);
   $("stat-amount").textContent = `${totalAmount.toLocaleString()}원`;
   $("stat-gift-count").textContent = `${giftRows.length}건`;
+  const giftFeeTotal = giftRows.reduce((s, o) => s + (Number(o.주문금액) || 0), 0);
+  $("stat-gift-fee").textContent = giftFeeTotal > 0 ? `배송비 ${giftFeeTotal.toLocaleString()}원 포함` : "";
 
   const isMain = (o) => (o.상품명 || "").includes("시그니처2플러스");
   const isAcc = (o) => o.상품명 === "ACC";
