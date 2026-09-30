@@ -1,5 +1,6 @@
 const $ = (id) => document.getElementById(id);
 let orders = [];
+let showTrash = false;
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
@@ -19,9 +20,13 @@ function fillExpoFilter() {
   sel.value = expos.includes(prev) ? prev : (expos[0] || "");
 }
 
+function activeOrders() { return orders.filter(o => !o.deleted_at); }
+function trashedOrders() { return orders.filter(o => o.deleted_at); }
+
 function expoFiltered() {
   const expo = $("expo-filter").value;
-  return expo ? orders.filter(o => o.판매처 === expo) : orders;
+  const base = showTrash ? trashedOrders() : activeOrders();
+  return expo ? base.filter(o => o.판매처 === expo) : base;
 }
 
 function renderTable() {
@@ -31,7 +36,11 @@ function renderTable() {
     ? base.filter(o => (o.수취인 || "").toLowerCase().includes(q) || (o.연락처 || "").toLowerCase().includes(q))
     : base;
 
-  $("count-badge").textContent = `(${rows.length}/${orders.length}건)`;
+  $("list-title").textContent = showTrash ? "휴지통" : "주문 목록";
+  $("count-badge").textContent = `(${rows.length}/${(showTrash ? trashedOrders() : activeOrders()).length}건)`;
+  $("trash-toggle-btn").textContent = showTrash ? "← 주문 목록으로" : "🗑 휴지통";
+  $("export-btn").classList.toggle("hidden", showTrash);
+
   $("tbody").innerHTML = rows.map(o => `
     <tr>
       <td>${esc(o.판매처)}</td><td>${esc(o.주문번호)}</td><td>${esc(o.주문일)}</td>
@@ -40,22 +49,45 @@ function renderTable() {
       <td>${esc(o.수취인)}</td><td>${esc(o.연락처)}</td><td>${esc(o.우편번호)}</td>
       <td>${esc(o.주소)}</td><td>${esc(o.배송희망일자)}</td><td>${esc(o.배송메세지)}</td>
       <td class="actions">
-        <button data-edit="${o.id}">수정</button>
-        <button data-del="${o.id}">삭제</button>
+        ${showTrash
+          ? `<button data-restore="${o.id}">복원</button><button data-purge="${o.id}">영구삭제</button>`
+          : `<button data-edit="${o.id}">수정</button><button data-del="${o.id}">삭제</button>`}
       </td>
     </tr>`).join("");
   $("tbody").querySelectorAll("[data-edit]").forEach(b =>
     b.addEventListener("click", () => location.href = `index.html?edit=${b.dataset.edit}`));
   $("tbody").querySelectorAll("[data-del]").forEach(b =>
     b.addEventListener("click", () => deleteOrder(b.dataset.del)));
+  $("tbody").querySelectorAll("[data-restore]").forEach(b =>
+    b.addEventListener("click", () => restoreOrder(b.dataset.restore)));
+  $("tbody").querySelectorAll("[data-purge]").forEach(b =>
+    b.addEventListener("click", () => purgeOrder(b.dataset.purge)));
 }
 
 async function deleteOrder(id) {
-  if (!confirm("이 주문을 삭제할까요?")) return;
+  if (!confirm("정말 삭제하시겠습니까?")) return;
+  const { error } = await sb.from("orders").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  if (error) alert(error.message);
+  await loadOrders();
+}
+
+async function restoreOrder(id) {
+  const { error } = await sb.from("orders").update({ deleted_at: null }).eq("id", id);
+  if (error) alert(error.message);
+  await loadOrders();
+}
+
+async function purgeOrder(id) {
+  if (!confirm("영구 삭제하면 복구할 수 없습니다. 계속할까요?")) return;
   const { error } = await sb.from("orders").delete().eq("id", id);
   if (error) alert(error.message);
   await loadOrders();
 }
+
+$("trash-toggle-btn").addEventListener("click", () => {
+  showTrash = !showTrash;
+  renderTable();
+});
 
 $("search").addEventListener("input", renderTable);
 $("search-btn").addEventListener("click", renderTable);
@@ -89,7 +121,7 @@ $("export-btn").addEventListener("click", async () => {
     (rows?.[0]?.묶음구성 || []).forEach(b => { bundleMap[b.코드옵션] = b; });
   }
 
-  const exploded = expoFiltered().filter(o => !isOnSiteGift(o)).flatMap(o => explodeOrder(o, bundleMap));
+  const exploded = expoFiltered().filter(o => !o.deleted_at && !isOnSiteGift(o)).flatMap(o => explodeOrder(o, bundleMap));
   const rows = exploded.map(o => COLUMNS.map(c => o[c] ?? ""));
   const ws = XLSX.utils.aoa_to_sheet([COLUMNS, ...rows]);
   const wb = XLSX.utils.book_new();
