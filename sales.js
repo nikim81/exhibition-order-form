@@ -18,6 +18,8 @@ function fillExpoSelect() {
 }
 
 const isGift = (o) => (o.상품명 || "").startsWith("[사은품]");
+const isMain = (o) => (o.상품명 || "").includes("시그니처2플러스");
+const isAcc = (o) => o.상품명 === "ACC";
 
 function render() {
   const expo = $("expo-select").value;
@@ -33,8 +35,6 @@ function render() {
   const giftFeeTotal = giftRows.reduce((s, o) => s + (Number(o.주문금액) || 0), 0);
   $("stat-gift-fee").textContent = giftFeeTotal > 0 ? `배송비 ${giftFeeTotal.toLocaleString()}원 포함` : "";
 
-  const isMain = (o) => (o.상품명 || "").includes("시그니처2플러스");
-  const isAcc = (o) => o.상품명 === "ACC";
   renderGroup("main-tbody", "main-qty-badge", rows.filter(isMain));
   renderGroup("acc-tbody", "acc-qty-badge", rows.filter(isAcc));
   renderExpoSummary();
@@ -45,18 +45,27 @@ function renderDailySummary(saleRows) {
   const byDay = {};
   saleRows.forEach(o => {
     const day = o.주문일 || "(미지정)";
-    if (!byDay[day]) byDay[day] = { count: 0, qty: 0, amount: 0 };
-    byDay[day].count += 1;
-    byDay[day].qty += o.수량 || 0;
-    byDay[day].amount += Number(o.주문금액) || 0;
+    if (!byDay[day]) byDay[day] = { mainCount: 0, mainQty: 0, accCount: 0, accQty: 0, amount: 0 };
+    const v = byDay[day];
+    if (isMain(o)) { v.mainCount += 1; v.mainQty += o.수량 || 0; }
+    else if (isAcc(o)) { v.accCount += 1; v.accQty += o.수량 || 0; }
+    v.amount += Number(o.주문금액) || 0;
   });
   const list = Object.entries(byDay).sort((a, b) => a[0].localeCompare(b[0]));
-  const totals = list.reduce((s, [, v]) => ({ count: s.count + v.count, qty: s.qty + v.qty, amount: s.amount + v.amount }), { count: 0, qty: 0, amount: 0 });
+  const totals = list.reduce((s, [, v]) => ({
+    mainCount: s.mainCount + v.mainCount, mainQty: s.mainQty + v.mainQty,
+    accCount: s.accCount + v.accCount, accQty: s.accQty + v.accQty,
+    amount: s.amount + v.amount,
+  }), { mainCount: 0, mainQty: 0, accCount: 0, accQty: 0, amount: 0 });
 
-  $("daily-tbody").innerHTML = list.length ? list.map(([day, v]) => `
-    <tr><td>${day}</td><td>${v.count}건</td><td>${v.qty}개</td><td>${v.amount.toLocaleString()}원</td></tr>
-  `).join("") + `<tr style="font-weight:700;background:#f9fafb;"><td>합계</td><td>${totals.count}건</td><td>${totals.qty}개</td><td>${totals.amount.toLocaleString()}원</td></tr>`
-    : `<tr><td colspan="4" style="color:#999;">데이터 없음</td></tr>`;
+  const row = (label, v, bold) => `
+    <tr${bold ? ' style="font-weight:700;background:#f9fafb;"' : ""}>
+      <td>${label}</td><td>${v.mainCount}건</td><td>${v.mainQty}개</td><td>${v.accCount}건</td><td>${v.accQty}개</td><td>${v.amount.toLocaleString()}원</td>
+    </tr>`;
+
+  $("daily-tbody").innerHTML = list.length
+    ? list.map(([day, v]) => row(day, v, false)).join("") + row("합계", totals, true)
+    : `<tr><td colspan="6" style="color:#999;">데이터 없음</td></tr>`;
 }
 
 function renderExpoSummary() {
