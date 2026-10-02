@@ -305,7 +305,7 @@ $("addr-search-btn").addEventListener("click", () => {
 $("addr-modal-close").addEventListener("click", closeAddrModal);
 
 // ---- default field values ----
-function today() { return new Date().toISOString().slice(0, 10); }
+function today() { return new Date().toLocaleDateString("sv-SE"); }
 function resetForm() {
   editingId = null;
   editMode = false;
@@ -343,7 +343,7 @@ function genOrderNo() {
 function commonFields() {
   return {
     판매처: settings.박람회명 || "박람회",
-    주문일: today(),
+    주문일: $("f-주문일").value || today(),
     업체명: "",
     수취인: $("f-수취인").value.trim(),
     연락처: $("f-연락처").value.trim(),
