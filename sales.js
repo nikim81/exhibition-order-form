@@ -2,7 +2,7 @@ const $ = (id) => document.getElementById(id);
 let orders = [];
 
 async function loadOrders() {
-  const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false });
+  const { data, error } = await sb.from("orders").select("*").is("deleted_at", null).order("created_at", { ascending: false });
   if (error) { console.error(error); return; }
   orders = data;
   fillExpoSelect();
