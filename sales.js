@@ -38,6 +38,25 @@ function render() {
   renderGroup("main-tbody", "main-qty-badge", rows.filter(isMain));
   renderGroup("acc-tbody", "acc-qty-badge", rows.filter(isAcc));
   renderExpoSummary();
+  renderDailySummary(saleRows);
+}
+
+function renderDailySummary(saleRows) {
+  const byDay = {};
+  saleRows.forEach(o => {
+    const day = o.주문일 || "(미지정)";
+    if (!byDay[day]) byDay[day] = { count: 0, qty: 0, amount: 0 };
+    byDay[day].count += 1;
+    byDay[day].qty += o.수량 || 0;
+    byDay[day].amount += Number(o.주문금액) || 0;
+  });
+  const list = Object.entries(byDay).sort((a, b) => a[0].localeCompare(b[0]));
+  const totals = list.reduce((s, [, v]) => ({ count: s.count + v.count, qty: s.qty + v.qty, amount: s.amount + v.amount }), { count: 0, qty: 0, amount: 0 });
+
+  $("daily-tbody").innerHTML = list.length ? list.map(([day, v]) => `
+    <tr><td>${day}</td><td>${v.count}건</td><td>${v.qty}개</td><td>${v.amount.toLocaleString()}원</td></tr>
+  `).join("") + `<tr style="font-weight:700;background:#f9fafb;"><td>합계</td><td>${totals.count}건</td><td>${totals.qty}개</td><td>${totals.amount.toLocaleString()}원</td></tr>`
+    : `<tr><td colspan="4" style="color:#999;">데이터 없음</td></tr>`;
 }
 
 function renderExpoSummary() {
