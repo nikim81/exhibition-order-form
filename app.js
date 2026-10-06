@@ -82,10 +82,9 @@ $("steril-add-btn").addEventListener("click", () => {
   const [code, option] = currentColorKey.split("|||");
   const p = tierProducts().find(x => x.code === code && x.option === option);
   const qty = Number($("steril-qty").value) || 1;
+  // 선택1(소독기)은 하나만 담을 수 있음
+  if (!editMode && hasSterilizerInCart()) { showErr("이미 선택된 소독기가 있습니다. 선택한 상품에서 삭제 후 다시 담아주세요."); return; }
   if (editMode) cart.clear();
-  // 선택1(소독기)은 하나만 담을 수 있음: 새로 담으면 기존 소독기를 교체
-  const tierNames = Object.values(TIER_NAME);
-  [...cart.entries()].forEach(([k, it]) => { if (tierNames.includes(it.name)) cart.delete(k); });
   cart.set(currentColorKey, { name: p.name, code, option, price: priceFor(code, option), qty });
   currentColorKey = null;
   $("steril-qty").value = 1;
@@ -207,13 +206,17 @@ function renderCart() {
   const items = [...cart.values()];
   $("cart-list").innerHTML = items.length ? items.map(it => `
     <div class="cart-row">
-      <span>${it.name} - ${it.option} × ${it.qty}${it.price != null ? ` = ${(it.price * it.qty).toLocaleString()}원` : ""}</span>
-      <button type="button" data-remove="${it.code}|||${it.option}">삭제</button>
+      <div class="cart-info">
+        <div class="cart-name">${esc(it.name)}</div>
+        <div class="cart-meta">${esc(it.option)} · ${it.qty}개</div>
+      </div>
+      <div class="cart-price">${it.price != null ? `${(it.price * it.qty).toLocaleString()}원` : ""}</div>
+      <button type="button" class="cart-del" aria-label="삭제" data-remove="${esc(it.code)}|||${esc(it.option)}">✕</button>
     </div>`).join("") : `<div style="color:#999;font-size:13px;">선택된 상품이 없습니다</div>`;
   $("cart-list").querySelectorAll("[data-remove]").forEach(b =>
     b.addEventListener("click", () => { cart.delete(b.dataset.remove); renderAll(); }));
   const total = items.reduce((s, it) => s + (it.price || 0) * it.qty, 0);
-  $("cart-total").textContent = items.length ? `합계: ${total.toLocaleString()}원` : "";
+  $("cart-total").innerHTML = items.length ? `<span>합계</span><strong>${total.toLocaleString()}원</strong>` : "";
 }
 
 function renderAll() {
