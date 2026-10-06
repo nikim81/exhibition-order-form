@@ -254,7 +254,7 @@ function showExpoPicker() {
   $("order-card").classList.add("hidden");
   $("expo-picker").classList.remove("hidden");
   $("expo-picker-list").innerHTML = activeExhibitions.map(e => `
-    <button type="button" class="ghost expo-pick-btn" data-id="${e.id}" style="display:block;width:100%;margin-bottom:8px;">${e.박람회명}</button>
+    <button type="button" class="ghost expo-pick-btn" data-id="${esc(e.id)}" style="display:block;width:100%;margin-bottom:8px;">${esc(e.박람회명)}</button>
   `).join("");
   $("expo-picker-list").querySelectorAll("[data-id]").forEach(b => {
     b.addEventListener("click", () => {

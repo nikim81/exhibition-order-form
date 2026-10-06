@@ -13,7 +13,7 @@ function fillExpoSelect() {
   const sel = $("expo-select");
   const prev = sel.value;
   const expos = [...new Set(orders.map(o => o.판매처).filter(Boolean))];
-  sel.innerHTML = `<option value="">전체 박람회</option>` + expos.map(e => `<option value="${e}">${e}</option>`).join("");
+  sel.innerHTML = `<option value="">전체 박람회</option>` + expos.map(e => `<option value="${esc(e)}">${esc(e)}</option>`).join("");
   sel.value = expos.includes(prev) ? prev : "";
 }
 
@@ -60,7 +60,7 @@ function renderDailySummary(saleRows) {
 
   const row = (label, v, bold) => `
     <tr${bold ? ' style="font-weight:700;background:#f9fafb;"' : ""}>
-      <td>${label}</td><td>${v.mainCount}건</td><td>${v.mainQty}개</td><td>${v.accCount}건</td><td>${v.accQty}개</td><td>${v.amount.toLocaleString()}원</td>
+      <td>${esc(label)}</td><td>${v.mainCount}건</td><td>${v.mainQty}개</td><td>${v.accCount}건</td><td>${v.accQty}개</td><td>${v.amount.toLocaleString()}원</td>
     </tr>`;
 
   $("daily-tbody").innerHTML = list.length
@@ -81,7 +81,7 @@ function renderExpoSummary() {
   const totals = list.reduce((s, [, v]) => ({ count: s.count + v.count, qty: s.qty + v.qty, amount: s.amount + v.amount }), { count: 0, qty: 0, amount: 0 });
 
   $("expo-summary-tbody").innerHTML = list.length ? list.map(([name, v]) => `
-    <tr class="expo-summary-row" data-expo="${name}"><td>${name}</td><td>${v.count}건</td><td>${v.qty}개</td><td>${v.amount.toLocaleString()}원</td></tr>
+    <tr class="expo-summary-row" data-expo="${esc(name)}"><td>${esc(name)}</td><td>${v.count}건</td><td>${v.qty}개</td><td>${v.amount.toLocaleString()}원</td></tr>
   `).join("") + `<tr style="font-weight:700;background:#f9fafb;"><td>전체 합계</td><td>${totals.count}건</td><td>${totals.qty}개</td><td>${totals.amount.toLocaleString()}원</td></tr>`
     : `<tr><td colspan="4" style="color:#999;">데이터 없음</td></tr>`;
 
@@ -101,7 +101,7 @@ function renderGroup(tbodyId, badgeId, rows) {
 
   $(badgeId).textContent = `(총 ${rows.reduce((s, o) => s + (o.수량 || 0), 0)}개)`;
   $(tbodyId).innerHTML = list.map(c => `
-    <tr><td>${c.상품명 ?? ""}</td><td>${c.옵션명 ?? ""}</td><td>${c.count}</td><td>${c.qty}</td></tr>
+    <tr><td>${esc(c.상품명)}</td><td>${esc(c.옵션명)}</td><td>${c.count}</td><td>${c.qty}</td></tr>
   `).join("") || `<tr><td colspan="4" style="color:#999;">데이터 없음</td></tr>`;
 }
 

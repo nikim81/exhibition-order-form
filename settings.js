@@ -29,8 +29,8 @@ function renderExpoList() {
   const list = month ? exhibitions.filter(e => (e.시작일 || "").slice(0, 7) === month) : exhibitions;
   $("expo-list").innerHTML = list.map(e => `
     <div class="expo-card ${e.is_active ? "active" : ""}">
-      <span>${e.박람회명}${e.is_active ? '<span class="badge">● 활성</span>' : ""}
-        <span style="color:#999;"> · ${e.시작일 || "?"} ~ ${e.종료일 || "?"}</span>
+      <span>${esc(e.박람회명)}${e.is_active ? '<span class="badge">● 활성</span>' : ""}
+        <span style="color:#999;"> · ${esc(e.시작일 || "?")} ~ ${esc(e.종료일 || "?")}</span>
       </span>
       <span class="actions">
         <button data-edit="${e.id}">수정</button>
@@ -262,7 +262,7 @@ async function loadBundleTemplates() {
   if (error) { console.error(error); return; }
   bundleTemplates = data;
   $("bundle-template-select").innerHTML = `<option value="">-- 저장된 묶음 템플릿 불러오기 --</option>` +
-    bundleTemplates.map(t => `<option value="${t.id}">${t.이름} (${t.구성.length}개)</option>`).join("");
+    bundleTemplates.map(t => `<option value="${esc(t.id)}">${esc(t.이름)} (${t.구성.length}개)</option>`).join("");
 }
 
 $("bundle-template-load-btn").addEventListener("click", () => {

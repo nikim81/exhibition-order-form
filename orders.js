@@ -16,7 +16,7 @@ function fillExpoFilter() {
   const sel = $("expo-filter");
   const prev = sel.value;
   const expos = [...new Set(orders.map(o => o.판매처).filter(Boolean))];
-  sel.innerHTML = `<option value="">전체 박람회</option>` + expos.map(e => `<option value="${e}">${e}</option>`).join("");
+  sel.innerHTML = `<option value="">전체 박람회</option>` + expos.map(e => `<option value="${esc(e)}">${esc(e)}</option>`).join("");
   sel.value = expos.includes(prev) ? prev : (expos[0] || "");
 }
 
