@@ -374,6 +374,12 @@ $("submit-btn").addEventListener("click", async () => {
     showErr("상품을 1개 이상 선택하세요.");
     return;
   }
+  // 본품(소독기) 구매 시 박람회에 사은품이 세팅돼 있으면 선택 필수 (수정 모드는 한 줄 단위라 제외)
+  if (!editMode && hasSterilizerInCart() && giftProducts().length && !currentGiftKey) {
+    showErr("선택3. 사은품을 선택하세요.");
+    $("gift-grid").scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
   if (!$("f-계좌이체").checked && !$("f-카드결제").checked) {
     showErr("결제 방법(계좌이체 또는 카드결제)을 선택하세요.");
     return;
