@@ -77,17 +77,16 @@ function showErr(msg) {
 }
 
 $("steril-add-btn").addEventListener("click", () => {
-  if (!currentColorKey) { showErr("소독기 컬러를 선택하세요."); return; }
+  const stErr = msg => { $("steril-err").textContent = `⚠ ${msg}`; };
+  if (!currentColorKey) { stErr("소독기 컬러를 선택하세요."); return; }
   $("err").textContent = "";
   const [code, option] = currentColorKey.split("|||");
   const p = tierProducts().find(x => x.code === code && x.option === option);
-  const qty = Number($("steril-qty").value) || 1;
-  // 선택1(소독기)은 하나만 담을 수 있음
-  if (!editMode && hasSterilizerInCart()) { showErr("이미 선택된 소독기가 있습니다. 선택한 상품에서 삭제 후 다시 담아주세요."); return; }
+  // 선택1(소독기)은 주문당 1대만 (여러 대 구매 시 배송지별로 주문을 따로 입력)
+  if (!editMode && hasSterilizerInCart()) { stErr("이미 선택된 소독기가 있습니다. 선택한 상품에서 삭제 후 다시 담아주세요."); return; }
   if (editMode) cart.clear();
-  cart.set(currentColorKey, { name: p.name, code, option, price: priceFor(code, option), qty });
+  cart.set(currentColorKey, { name: p.name, code, option, price: priceFor(code, option), qty: 1 });
   currentColorKey = null;
-  $("steril-qty").value = 1;
   renderSterilizerGrid();
   renderGiftSection();
   renderCart();
@@ -203,6 +202,7 @@ $("gift-delivery").addEventListener("change", (e) => {
 });
 
 function renderCart() {
+  $("steril-err").textContent = "";
   const items = [...cart.values()];
   $("cart-list").innerHTML = items.length ? items.map(it => `
     <div class="cart-row">
