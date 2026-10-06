@@ -7,11 +7,11 @@ let activeProducts = PRODUCTS;
 let cart = new Map(); // key = `${code}|||${option}` -> {name, code, option, price, qty}
 
 const TIER_NAME = {
-  "단품": "시그니처2플러스",
   "3종": "시그니처2플러스+ACC3종(세로,수납,다용도)",
   "4종": "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)",
+  "단품": "시그니처2플러스",
 };
-let currentTier = "단품";
+let currentTier = "3종";
 let currentColorKey = null;
 let currentGiftKey = null; // code|||option of the selected gift (no delivery suffix)
 let currentGiftCartKey = null; // actual key this gift is stored under in `cart`
@@ -83,9 +83,10 @@ $("steril-add-btn").addEventListener("click", () => {
   const p = tierProducts().find(x => x.code === code && x.option === option);
   const qty = Number($("steril-qty").value) || 1;
   if (editMode) cart.clear();
-  const existing = cart.get(currentColorKey);
-  if (existing) existing.qty += qty;
-  else cart.set(currentColorKey, { name: p.name, code, option, price: priceFor(code, option), qty });
+  // 선택1(소독기)은 하나만 담을 수 있음: 새로 담으면 기존 소독기를 교체
+  const tierNames = Object.values(TIER_NAME);
+  [...cart.entries()].forEach(([k, it]) => { if (tierNames.includes(it.name)) cart.delete(k); });
+  cart.set(currentColorKey, { name: p.name, code, option, price: priceFor(code, option), qty });
   currentColorKey = null;
   $("steril-qty").value = 1;
   renderSterilizerGrid();
