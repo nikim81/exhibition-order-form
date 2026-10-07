@@ -385,6 +385,12 @@ $("submit-btn").addEventListener("click", async () => {
     return;
   }
   $("err").textContent = "";
+  // 저장 중 버튼 잠금: 빠르게 두 번 누르면 같은 주문이 2건 들어가는 것 방지
+  $("submit-btn").disabled = true;
+  try { await saveOrder(); } finally { $("submit-btn").disabled = false; }
+});
+
+async function saveOrder() {
   const common = commonFields();
 
   if (editingId) {
@@ -401,6 +407,7 @@ $("submit-btn").addEventListener("click", async () => {
   } else {
     const 주문번호 = genOrderNo();
     const { data: { user } } = await sb.auth.getUser();
+    if (!user) return $("err").textContent = "로그인이 만료되었습니다. 다시 로그인해 주세요.";
     const rows = [...cart.values()].map(it => ({
       ...common,
       주문번호,
@@ -413,7 +420,7 @@ $("submit-btn").addEventListener("click", async () => {
     alert("주문이 접수되었습니다!");
   }
   resetForm();
-});
+}
 
 $("cancel-edit-btn").addEventListener("click", () => {
   resetForm();
