@@ -367,7 +367,7 @@ $("submit-btn").addEventListener("click", async () => {
     return;
   }
   if (!$("f-동의").checked) {
-    showErr("개인정보 수집·이용에 동의해야 주문을 저장할 수 있습니다.");
+    showErr("개인정보 수집·이용 및 처리위탁에 동의해야 주문을 저장할 수 있습니다.");
     return;
   }
   if (cart.size === 0) {
