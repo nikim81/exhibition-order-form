@@ -11,7 +11,7 @@ const TIER_NAME = {
   "4종": "시그니처2플러스+ACC4종(세로,수납,다용도,멀티트레이)",
   "단품": "시그니처2플러스",
 };
-let currentTier = "3종";
+let currentTier = null; // 미선택 상태로 시작 (선택 전엔 ACC 단독 구매 가능)
 let currentColorKey = null;
 let currentGiftKey = null; // code|||option of the selected gift (no delivery suffix)
 let currentGiftCartKey = null; // actual key this gift is stored under in `cart`
@@ -20,7 +20,6 @@ let giftDelivery = "현장"; // "현장" | "배송"
 function tierProducts() { return activeProducts.filter(p => p.name === TIER_NAME[currentTier]); }
 function accProducts() { return activeProducts.filter(p => p.name === "ACC"); }
 function tierHasProducts(tier) { return activeProducts.some(p => p.name === TIER_NAME[tier]); }
-function firstAvailableTier() { return Object.keys(TIER_NAME).find(tierHasProducts) || "단품"; }
 
 function priceFor(code, option) {
   const p = activeProducts.find(x => x.code === code && x.option === option);
@@ -36,7 +35,7 @@ function renderTierTabs() {
 }
 $("tier-tabs").querySelectorAll(".tier-btn").forEach(b => {
   b.addEventListener("click", () => {
-    currentTier = b.dataset.tier;
+    currentTier = currentTier === b.dataset.tier ? null : b.dataset.tier;
     currentColorKey = null;
     renderTierTabs();
     renderSterilizerGrid();
@@ -64,7 +63,7 @@ function renderSterilizerGrid() {
 }
 
 function renderAccAvailability() {
-  const enabled = currentTier === "단품";
+  const enabled = currentTier !== "3종" && currentTier !== "4종";
   $("acc-grid").classList.toggle("disabled", !enabled);
   $("acc-label").textContent = enabled
     ? "선택2. 액세서리 (별도 구매 시)"
@@ -78,6 +77,7 @@ function showErr(msg) {
 
 $("steril-add-btn").addEventListener("click", () => {
   const stErr = msg => { $("steril-err").textContent = `⚠ ${msg}`; };
+  if (!currentTier) { stErr("3종 / 4종 / 단품 중 하나를 먼저 선택하세요."); return; }
   if (!currentColorKey) { stErr("소독기 컬러를 선택하세요."); return; }
   $("err").textContent = "";
   const [code, option] = currentColorKey.split("|||");
@@ -319,7 +319,7 @@ function resetForm() {
   $("expo-name").textContent = settings.박람회명 || "박람회";
   $("f-주문일").value = today();
   cart.clear();
-  currentTier = firstAvailableTier();
+  currentTier = null;
   currentColorKey = null;
   currentGiftKey = null;
   currentGiftCartKey = null;
@@ -436,7 +436,7 @@ function startEdit(order) {
     price: order.주문금액 != null ? order.주문금액 / qty : priceFor(order.상품코드, order.옵션명),
   });
   const matchedTier = Object.keys(TIER_NAME).find(t => TIER_NAME[t] === order.상품명);
-  currentTier = matchedTier || "단품";
+  currentTier = matchedTier || null;
   currentColorKey = matchedTier ? `${order.상품코드}|||${order.옵션명}` : null;
   currentGiftKey = null;
   currentGiftCartKey = null;
