@@ -14,8 +14,10 @@ function fillExpoSelect() {
   const prev = sel.value;
   const expos = [...new Set(orders.map(o => o.판매처).filter(Boolean))];
   sel.innerHTML = `<option value="">전체 박람회</option>` + expos.map(e => `<option value="${esc(e)}">${esc(e)}</option>`).join("");
-  sel.value = expos.includes(prev) ? prev : "";
+  // 첫 로드엔 가장 최근 주문이 들어온 박람회를 기본 선택 (orders는 created_at 내림차순)
+  sel.value = expoPicked ? (expos.includes(prev) ? prev : "") : (expos[0] || "");
 }
+let expoPicked = false; // 사용자가 직접 고른 뒤엔 새로고침/실시간 갱신 시 선택 유지
 
 const isGift = (o) => (o.상품명 || "").startsWith("[사은품]");
 const isMain = (o) => (o.상품명 || "").includes("시그니처2플러스");
@@ -86,7 +88,7 @@ function renderExpoSummary() {
     : `<tr><td colspan="4" style="color:#999;">데이터 없음</td></tr>`;
 
   $("expo-summary-tbody").querySelectorAll("[data-expo]").forEach(tr =>
-    tr.addEventListener("click", () => { $("expo-select").value = tr.dataset.expo; render(); }));
+    tr.addEventListener("click", () => { $("expo-select").value = tr.dataset.expo; expoPicked = true; render(); }));
 }
 
 function renderGroup(tbodyId, badgeId, rows) {
@@ -105,7 +107,7 @@ function renderGroup(tbodyId, badgeId, rows) {
   `).join("") || `<tr><td colspan="4" style="color:#999;">데이터 없음</td></tr>`;
 }
 
-$("expo-select").addEventListener("change", render);
+$("expo-select").addEventListener("change", () => { expoPicked = true; render(); });
 $("refresh-btn").addEventListener("click", loadOrders);
 $("logout-btn").addEventListener("click", async () => {
   await sb.auth.signOut();
