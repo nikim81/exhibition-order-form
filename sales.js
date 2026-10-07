@@ -1,10 +1,13 @@
 const $ = (id) => document.getElementById(id);
 let orders = [];
+let expoStart = {}; // 박람회명 → 시작일
 
 async function loadOrders() {
   const { data, error } = await sb.from("orders").select("*").is("deleted_at", null).order("created_at", { ascending: false });
   if (error) { console.error(error); return; }
   orders = data;
+  const { data: exps } = await sb.from("exhibitions").select("박람회명, 시작일");
+  expoStart = Object.fromEntries((exps || []).map(e => [e.박람회명, e.시작일 || ""]));
   fillExpoSelect();
   render();
 }
@@ -12,9 +15,11 @@ async function loadOrders() {
 function fillExpoSelect() {
   const sel = $("expo-select");
   const prev = sel.value;
-  const expos = [...new Set(orders.map(o => o.판매처).filter(Boolean))];
+  // 박람회 시작일 최신순 (시작일 없으면 뒤로, 동률은 최근 주문순 유지)
+  const expos = [...new Set(orders.map(o => o.판매처).filter(Boolean))]
+    .sort((a, b) => (expoStart[b] || "").localeCompare(expoStart[a] || ""));
   sel.innerHTML = `<option value="">전체 박람회</option>` + expos.map(e => `<option value="${esc(e)}">${esc(e)}</option>`).join("");
-  // 첫 로드엔 가장 최근 주문이 들어온 박람회를 기본 선택 (orders는 created_at 내림차순)
+  // 첫 로드엔 시작일이 가장 최근인 박람회를 기본 선택
   sel.value = expoPicked ? (expos.includes(prev) ? prev : "") : (expos[0] || "");
 }
 let expoPicked = false; // 사용자가 직접 고른 뒤엔 새로고침/실시간 갱신 시 선택 유지
