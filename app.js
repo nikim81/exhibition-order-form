@@ -16,6 +16,7 @@ let currentColorKey = null;
 let currentGiftKey = null; // code|||option of the selected gift (no delivery suffix)
 let currentGiftCartKey = null; // actual key this gift is stored under in `cart`
 let giftDelivery = "현장"; // "현장" | "배송"
+let editGiftBase = null; // 사은품 주문 수정 시 원본 상품 정보 (박람회 사은품 목록에 없어도 전달방식 변경 가능하게)
 
 function tierProducts() { return activeProducts.filter(p => p.name === TIER_NAME[currentTier]); }
 function accProducts() { return activeProducts.filter(p => p.name === "ACC"); }
@@ -144,7 +145,7 @@ function hasSterilizerInCart() {
 
 function addGiftToCart() {
   const [code, option] = currentGiftKey.split("|||");
-  const p = giftProducts().find(x => x.code === code && x.option === option);
+  const p = giftProducts().find(x => x.code === code && x.option === option) || editGiftBase;
   if (!p) return;
   const isDelivery = giftDelivery === "배송";
   const cartKey = isDelivery ? `${currentGiftKey}|||배송` : currentGiftKey;
@@ -160,13 +161,14 @@ function addGiftToCart() {
 }
 
 function renderGiftSection() {
-  const eligible = hasSterilizerInCart();
+  const editingGift = editMode && !!currentGiftKey; // 사은품 주문 수정: 상품은 고정, 현장/배송만 변경 가능
+  const eligible = hasSterilizerInCart() || editingGift;
   if (!eligible && currentGiftCartKey) {
     cart.delete(currentGiftCartKey);
     currentGiftCartKey = null;
     currentGiftKey = null;
   }
-  $("gift-grid").classList.toggle("disabled", !eligible);
+  $("gift-grid").classList.toggle("disabled", !eligible || editingGift);
   $("gift-label").textContent = eligible ? "선택3. 사은품" : "선택3. 사은품 (선택1 소독기를 먼저 담아주세요)";
 
   const grid = $("gift-grid");
@@ -204,14 +206,14 @@ $("gift-delivery").addEventListener("change", (e) => {
 function renderCart() {
   $("steril-err").textContent = "";
   const items = [...cart.values()];
-  $("cart-list").innerHTML = items.length ? items.map(it => `
+  $("cart-list").innerHTML = items.length ? [...cart.entries()].map(([key, it]) => `
     <div class="cart-row">
       <div class="cart-info">
         <div class="cart-name">${esc(it.name)}</div>
         <div class="cart-meta">${esc(it.option)} · ${it.qty}개</div>
       </div>
       <div class="cart-price">${it.price != null ? `${(it.price * it.qty).toLocaleString()}원` : ""}</div>
-      <button type="button" class="cart-del" aria-label="삭제" data-remove="${esc(it.code)}|||${esc(it.option)}">✕</button>
+      <button type="button" class="cart-del" aria-label="삭제" data-remove="${esc(key)}">✕</button>
     </div>`).join("") : `<div style="color:#999;font-size:13px;">선택된 상품이 없습니다</div>`;
   $("cart-list").querySelectorAll("[data-remove]").forEach(b =>
     b.addEventListener("click", () => { cart.delete(b.dataset.remove); renderAll(); }));
@@ -324,6 +326,7 @@ function resetForm() {
   currentGiftKey = null;
   currentGiftCartKey = null;
   giftDelivery = "현장";
+  editGiftBase = null;
   renderAll();
   $("f-수취인").value = "";
   $("f-연락처").value = "";
@@ -387,7 +390,9 @@ $("submit-btn").addEventListener("click", async () => {
   $("err").textContent = "";
   // 저장 중 버튼 잠금: 빠르게 두 번 누르면 같은 주문이 2건 들어가는 것 방지
   $("submit-btn").disabled = true;
-  try { await saveOrder(); } finally { $("submit-btn").disabled = false; }
+  try { await saveOrder(); }
+  catch (e) { showErr(`저장 중 오류가 발생했습니다. 입력 내용은 유지됩니다. 다시 시도해 주세요. (${e.message || e})`); }
+  finally { $("submit-btn").disabled = false; }
 });
 
 async function saveOrder() {
@@ -401,13 +406,13 @@ async function saveOrder() {
       주문금액: it.price != null ? it.price * it.qty : null,
     };
     const { error } = await sb.from("orders").update(row).eq("id", editingId);
-    if (error) return $("err").textContent = error.message;
+    if (error) return showErr(error.message);
     history.replaceState(null, "", "index.html");
     alert("주문이 수정되었습니다.");
   } else {
     const 주문번호 = genOrderNo();
     const { data: { user } } = await sb.auth.getUser();
-    if (!user) return $("err").textContent = "로그인이 만료되었습니다. 다시 로그인해 주세요.";
+    if (!user) return showErr("로그인이 만료되었습니다. 다시 로그인해 주세요.");
     const rows = [...cart.values()].map(it => ({
       ...common,
       주문번호,
@@ -416,7 +421,7 @@ async function saveOrder() {
       created_by: user.id,
     }));
     const { error } = await sb.from("orders").insert(rows);
-    if (error) return $("err").textContent = error.message;
+    if (error) return showErr(error.message);
     alert("주문이 접수되었습니다!");
   }
   resetForm();
@@ -448,6 +453,18 @@ function startEdit(order) {
   currentGiftKey = null;
   currentGiftCartKey = null;
   giftDelivery = "현장";
+  editGiftBase = null;
+  if ((order.상품명 || "").startsWith("[사은품]")) {
+    const opt = order.옵션명 || "";
+    const isDel = opt.endsWith("(배송)");
+    const baseOpt = opt.replace(/\(배송\)$/, "");
+    editGiftBase = { name: order.상품명.replace(/\(배송\)$/, ""), code: order.상품코드, option: baseOpt };
+    currentGiftKey = `${order.상품코드}|||${baseOpt}`;
+    giftDelivery = isDel ? "배송" : "현장";
+    currentGiftCartKey = isDel ? `${currentGiftKey}|||배송` : currentGiftKey;
+    cart.clear();
+    cart.set(currentGiftCartKey, { name: order.상품명, code: order.상품코드, option: opt, qty, price: order.주문금액 != null ? order.주문금액 / qty : null });
+  }
   renderAll();
 
   $("f-수취인").value = order.수취인 || "";
@@ -482,13 +499,21 @@ $("login-btn").addEventListener("click", async () => {
 
 $("logout-btn").addEventListener("click", () => sb.auth.signOut());
 
-sb.auth.onAuthStateChange(async (event, session) => {
+// 탭 복귀/토큰 갱신 때도 이 콜백이 다시 호출되므로, 같은 사용자의 재호출은 무시 (입력 중인 폼이 초기화되는 것 방지)
+let initedUserId = null;
+sb.auth.onAuthStateChange((event, session) => {
   if (session) {
     $("login-card").classList.add("hidden");
     $("app").classList.remove("hidden");
-    const ready = await loadSettings();
-    if (ready) { resetForm(); loadEditFromUrl(); }
+    if (session.user.id === initedUserId) return;
+    initedUserId = session.user.id;
+    // 콜백 안에서 바로 await sb.* 하면 auth 락 교착 가능 → 다음 틱으로 넘김
+    setTimeout(async () => {
+      const ready = await loadSettings();
+      if (ready) { resetForm(); loadEditFromUrl(); }
+    }, 0);
   } else {
+    initedUserId = null;
     $("app").classList.add("hidden");
     $("login-card").classList.remove("hidden");
   }
