@@ -359,7 +359,7 @@ $("expo-month-filter").addEventListener("change", renderExpoList);
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { location.href = "index.html"; return; }
   $("app").classList.remove("hidden");
-  $("expo-month-filter").value = new Date().toISOString().slice(0, 7);
+  $("expo-month-filter").value = new Date().toLocaleDateString("sv-SE").slice(0, 7);
   fillProductSelects();
   await loadBundleTemplates();
   await loadExhibitionList();

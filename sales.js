@@ -3,7 +3,7 @@ let orders = [];
 let expoStart = {}; // 박람회명 → 시작일
 
 async function loadOrders() {
-  const { data, error } = await sb.from("orders").select("*").is("deleted_at", null).order("created_at", { ascending: false });
+  const { data, error } = await fetchAll("orders", q => q.is("deleted_at", null).order("created_at", { ascending: false }).order("id"));
   if (error) { console.error(error); return; }
   orders = data;
   const { data: exps } = await sb.from("exhibitions").select("박람회명, 시작일");

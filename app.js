@@ -18,6 +18,12 @@ let currentGiftCartKey = null; // actual key this gift is stored under in `cart`
 let giftDelivery = "현장"; // "현장" | "배송"
 let editGiftBase = null; // 사은품 주문 수정 시 원본 상품 정보 (박람회 사은품 목록에 없어도 전달방식 변경 가능하게)
 
+// 수정 모드에서 다른 상품을 고르면 그 줄을 통째로 교체 (사은품 수정 상태도 함께 해제)
+function editReplaceRow() {
+  cart.clear();
+  currentGiftKey = null; currentGiftCartKey = null; editGiftBase = null;
+}
+
 function tierProducts() { return activeProducts.filter(p => p.name === TIER_NAME[currentTier]); }
 function accProducts() { return activeProducts.filter(p => p.name === "ACC"); }
 function tierHasProducts(tier) { return activeProducts.some(p => p.name === TIER_NAME[tier]); }
@@ -85,7 +91,7 @@ $("steril-add-btn").addEventListener("click", () => {
   const p = tierProducts().find(x => x.code === code && x.option === option);
   // 선택1(소독기)은 주문당 1대만 (여러 대 구매 시 배송지별로 주문을 따로 입력)
   if (!editMode && hasSterilizerInCart()) { stErr("이미 선택된 소독기가 있습니다. 선택한 상품에서 삭제 후 다시 담아주세요."); return; }
-  if (editMode) cart.clear();
+  if (editMode) editReplaceRow();
   cart.set(currentColorKey, { name: p.name, code, option, price: priceFor(code, option), qty: 1 });
   currentColorKey = null;
   renderSterilizerGrid();
@@ -121,7 +127,7 @@ function renderPicker(containerId, products) {
       } else if (cart.has(key)) {
         cart.delete(key);
       } else {
-        if (editMode) cart.clear();
+        if (editMode) editReplaceRow();
         cart.set(key, {
           name: el.dataset.name, code: el.dataset.code, option: el.dataset.option,
           price: priceFor(el.dataset.code, el.dataset.option), qty: 1,
@@ -162,14 +168,16 @@ function addGiftToCart() {
 
 function renderGiftSection() {
   const editingGift = editMode && !!currentGiftKey; // 사은품 주문 수정: 상품은 고정, 현장/배송만 변경 가능
-  const eligible = hasSterilizerInCart() || editingGift;
+  // 수정 모드는 한 줄 단위 저장이라 새 사은품을 추가할 수 없음 (추가해도 저장 시 누락됨)
+  const eligible = editMode ? editingGift : hasSterilizerInCart();
   if (!eligible && currentGiftCartKey) {
     cart.delete(currentGiftCartKey);
     currentGiftCartKey = null;
     currentGiftKey = null;
   }
   $("gift-grid").classList.toggle("disabled", !eligible || editingGift);
-  $("gift-label").textContent = eligible ? "선택3. 사은품" : "선택3. 사은품 (선택1 소독기를 먼저 담아주세요)";
+  $("gift-label").textContent = eligible ? "선택3. 사은품"
+    : editMode ? "선택3. 사은품 (주문 수정 중에는 추가할 수 없어요)" : "선택3. 사은품 (선택1 소독기를 먼저 담아주세요)";
 
   const grid = $("gift-grid");
   const products = giftProducts();
@@ -216,7 +224,11 @@ function renderCart() {
       <button type="button" class="cart-del" aria-label="삭제" data-remove="${esc(key)}">✕</button>
     </div>`).join("") : `<div style="color:#999;font-size:13px;">선택된 상품이 없습니다</div>`;
   $("cart-list").querySelectorAll("[data-remove]").forEach(b =>
-    b.addEventListener("click", () => { cart.delete(b.dataset.remove); renderAll(); }));
+    b.addEventListener("click", () => {
+      if (b.dataset.remove === currentGiftCartKey) { currentGiftKey = null; currentGiftCartKey = null; }
+      cart.delete(b.dataset.remove);
+      renderAll();
+    }));
   const total = items.reduce((s, it) => s + (it.price || 0) * it.qty, 0);
   $("cart-total").innerHTML = items.length ? `<span>합계</span><strong>${total.toLocaleString()}원</strong>` : "";
 }
@@ -343,7 +355,7 @@ function resetForm() {
 
 function genOrderNo() {
   const d = new Date();
-  const stamp = d.toISOString().slice(0,10).replace(/-/g,"");
+  const stamp = d.toLocaleDateString("sv-SE").replace(/-/g,"");
   return `EXPO${stamp}${Math.floor(Math.random()*9000+1000)}`;
 }
 

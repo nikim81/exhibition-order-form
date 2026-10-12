@@ -2,10 +2,10 @@ const $ = (id) => document.getElementById(id);
 let orders = [];
 let showTrash = false;
 
-function today() { return new Date().toISOString().slice(0, 10); }
+function today() { return new Date().toLocaleDateString("sv-SE"); }
 
 async function loadOrders() {
-  const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false });
+  const { data, error } = await fetchAll("orders", q => q.order("created_at", { ascending: false }).order("id"));
   if (error) { console.error(error); return; }
   orders = data;
   fillExpoFilter();
@@ -113,15 +113,17 @@ function explodeOrder(o, bundleMap) {
 }
 
 $("export-btn").addEventListener("click", async () => {
-  const expoName = $("expo-filter").value;
-  const bundleMap = {};
-  if (expoName) {
-    const { data: rows } = await sb.from("exhibitions").select("묶음구성")
-      .eq("박람회명", expoName).order("created_at", { ascending: false }).limit(1);
-    (rows?.[0]?.묶음구성 || []).forEach(b => { bundleMap[b.코드옵션] = b; });
-  }
+  // 박람회별 묶음구성 (같은 이름이 여러 개면 가장 최근 것). "전체 박람회"로 받아도 각 행이 자기 박람회 기준으로 풀리게 함
+  const { data: expos, error: expoErr } = await sb.from("exhibitions").select("박람회명, 묶음구성").order("created_at", { ascending: false });
+  if (expoErr) { alert(`묶음구성을 불러오지 못했습니다: ${expoErr.message}`); return; }
+  const bundleMaps = {};
+  (expos || []).forEach(e => {
+    if (bundleMaps[e.박람회명]) return;
+    bundleMaps[e.박람회명] = {};
+    (e.묶음구성 || []).forEach(b => { bundleMaps[e.박람회명][b.코드옵션] = b; });
+  });
 
-  const exploded = expoFiltered().filter(o => !o.deleted_at && !isOnSiteGift(o)).flatMap(o => explodeOrder(o, bundleMap));
+  const exploded = expoFiltered().filter(o => !o.deleted_at && !isOnSiteGift(o)).flatMap(o => explodeOrder(o, bundleMaps[o.판매처] || {}));
   const rows = exploded.map(o => COLUMNS.map(c => o[c] ?? ""));
   const ws = XLSX.utils.aoa_to_sheet([COLUMNS, ...rows]);
   const wb = XLSX.utils.book_new();
