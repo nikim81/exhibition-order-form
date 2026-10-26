@@ -198,6 +198,10 @@ function renderGiftSection() {
 
   const grid = $("gift-grid");
   const products = giftProducts();
+  // 세팅에서 체크한 사은품이 없으면 섹션 자체를 숨김
+  const noGifts = !products.length && !editingGift;
+  $("gift-label").classList.toggle("hidden", noGifts);
+  grid.classList.toggle("hidden", noGifts);
   grid.innerHTML = products.map(p => {
     const key = `${p.code}|||${p.option}`;
     return `<div class="swatch gift-swatch${key === currentGiftKey ? " selected" : ""}" data-key="${key}"><span>${p.option}</span></div>`;

@@ -10,8 +10,6 @@ const productLabel = (p) => `${p.name} - ${p.option} (${p.code})`;
 
 function fillProductSelects() {
   const optionsHtml = PRODUCTS.map(p => `<option value="${key(p)}">${productLabel(p)}</option>`).join("");
-  $("gift-product").innerHTML = PRODUCTS.filter(p => p.name.startsWith("[사은품]"))
-    .map(p => `<option value="${key(p)}">${productLabel(p)}</option>`).join("");
   $("bundle-base").innerHTML = optionsHtml;
   $("bundle-part-product").innerHTML = optionsHtml;
 }
@@ -124,7 +122,7 @@ function groupPrice(name) {
 }
 
 function renderProductGroups() {
-  const names = [...new Set(PRODUCTS.map(p => p.name))];
+  const names = [...new Set(PRODUCTS.map(p => p.name))].filter(n => !n.startsWith("[사은품]")); // 사은품은 아래 사은품 섹션에서만 관리
   $("product-groups").innerHTML = names.map(name => {
     const opts = PRODUCTS.filter(p => p.name === name);
     const allChecked = opts.every(o => state.판매제품.some(sp => sp.code === o.code && sp.option === o.option));
@@ -136,12 +134,11 @@ function renderProductGroups() {
         </div>
         ${opts.map(o => {
           const sp = state.판매제품.find(x => x.code === o.code && x.option === o.option);
-          const isGift = name.startsWith("[사은품]");
           return `
           <div class="opt-row">
             <input type="checkbox" class="opt-check" data-code="${o.code}" data-option="${o.option}" ${sp ? "checked" : ""}>
             <span>${o.option} (${o.code})</span>
-            ${sp && !isGift ? `<input type="text" inputmode="numeric" class="price-input" placeholder="가격" data-code="${o.code}" data-option="${o.option}" data-name="${name}" value="${formatPrice(sp.price)}">` : ""}
+            ${sp ? `<input type="text" inputmode="numeric" class="price-input" placeholder="가격" data-code="${o.code}" data-option="${o.option}" data-name="${name}" value="${formatPrice(sp.price)}">` : ""}
           </div>`;
         }).join("")}
       </div>`;
@@ -200,22 +197,18 @@ function renderProductGroups() {
 
 // ---- 사은품 ----
 function renderGiftList() {
-  $("gift-list").innerHTML = state.사은품.map((g, i) => `
-    <div class="pill">
-      <span>${g.name} - ${g.option} (${g.code})</span>
-      <button data-i="${i}">삭제</button>
-    </div>`).join("") || `<div style="color:#999;font-size:13px;">등록된 사은품 없음</div>`;
-  $("gift-list").querySelectorAll("button").forEach(b =>
-    b.addEventListener("click", () => { state.사은품.splice(Number(b.dataset.i), 1); renderGiftList(); }));
+  $("gift-list").innerHTML = PRODUCTS.filter(p => p.name.startsWith("[사은품]")).map(p => `
+    <div class="opt-row">
+      <input type="checkbox" data-key="${key(p)}" ${state.사은품.some(g => key(g) === key(p)) ? "checked" : ""}>
+      <span>${productLabel(p)}</span>
+    </div>`).join("");
+  $("gift-list").querySelectorAll("input").forEach(cb =>
+    cb.addEventListener("change", () => {
+      const p = PRODUCTS.find(x => key(x) === cb.dataset.key);
+      state.사은품 = state.사은품.filter(g => key(g) !== key(p));
+      if (cb.checked) state.사은품.push({ name: p.name, code: p.code, option: p.option });
+    }));
 }
-
-$("gift-add-btn").addEventListener("click", () => {
-  const [code, option] = $("gift-product").value.split("|||");
-  const p = PRODUCTS.find(x => x.code === code && x.option === option);
-  if (state.사은품.some(g => g.code === code && g.option === option)) return;
-  state.사은품.push({ name: p.name, code: p.code, option: p.option });
-  renderGiftList();
-});
 
 // ---- 묶음 구성 ----
 function renderBundleParts() {
