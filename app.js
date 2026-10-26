@@ -1,6 +1,7 @@
 const $ = (id) => document.getElementById(id);
 sessionStorage.removeItem("adminUnlocked"); // 주문 입력 화면을 거치면 관리자 PIN을 다시 물어보게 함
 let editingId = null;
+let editingOrderNo = null;
 let editMode = false;
 let settings = { 박람회명: "박람회", 판매제품: [] };
 let activeProducts = PRODUCTS;
@@ -89,6 +90,8 @@ $("steril-add-btn").addEventListener("click", () => {
   $("err").textContent = "";
   const [code, option] = currentColorKey.split("|||");
   const p = tierProducts().find(x => x.code === code && x.option === option);
+  // 수정 모드에서 미리 선택된 컬러가 현재 박람회 판매제품에 없을 수 있음
+  if (!p) { currentColorKey = null; renderSterilizerGrid(); stErr("소독기 컬러를 다시 선택하세요."); return; }
   // 선택1(소독기)은 주문당 1대만 (여러 대 구매 시 배송지별로 주문을 따로 입력)
   if (!editMode && hasSterilizerInCart()) { stErr("이미 선택된 소독기가 있습니다. 선택한 상품에서 삭제 후 다시 담아주세요."); return; }
   if (editMode) editReplaceRow();
@@ -325,6 +328,7 @@ $("f-연락처").addEventListener("input", () => {
   const digits = $("f-연락처").value.replace(/\D/g, "").slice(0, 11);
   let formatted = digits;
   if (digits.length > 3 && digits.length <= 7) formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  else if (digits.length === 10) formatted = `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`; // 011-123-4567
   else if (digits.length > 7) formatted = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
   $("f-연락처").value = formatted;
 });
@@ -356,6 +360,7 @@ $("addr-modal-close").addEventListener("click", closeAddrModal);
 function today() { return new Date().toLocaleDateString("sv-SE"); }
 function resetForm() {
   editingId = null;
+  editingOrderNo = null;
   editMode = false;
   $("form-title").textContent = "주문 입력";
   $("submit-btn").textContent = "주문 저장";
@@ -412,6 +417,15 @@ $("submit-btn").addEventListener("click", async () => {
     showErr("수취인, 연락처, 주소는 필수입니다.");
     return;
   }
+  if (!/^01\d{8,9}$/.test($("f-연락처").value.replace(/\D/g, ""))) {
+    showErr("연락처를 정확히 입력하세요. (예: 010-1234-5678)");
+    return;
+  }
+  // 박람회를 못 불러온 상태로 저장하면 판매처가 "박람회"로 들어가 집계에서 빠짐
+  if (!editMode && !settings.id) {
+    showErr("진행 중인 박람회를 불러오지 못했습니다. 새로고침 후 다시 시도하세요.");
+    return;
+  }
   if (!$("f-동의").checked) {
     showErr("개인정보 수집·이용 및 처리위탁에 동의해야 주문을 저장할 수 있습니다.");
     return;
@@ -443,13 +457,20 @@ async function saveOrder() {
 
   if (editingId) {
     const it = [...cart.values()][0];
+    // 판매처는 원래 박람회 유지 (다른 박람회 주문을 수정해도 현재 기기의 박람회로 바뀌지 않게)
+    const { 판매처, ...shared } = common;
     const row = {
-      ...common,
+      ...shared,
       상품명: it.name, 상품코드: it.code, 옵션명: it.option, 수량: it.qty,
       주문금액: it.price != null ? it.price * it.qty : null,
     };
     const { error } = await sb.from("orders").update(row).eq("id", editingId);
     if (error) return showErr(error.message);
+    // 고객 정보(수취인/주소/결제 등)는 같은 주문번호의 다른 상품 줄에도 반영 (배송지가 갈라지지 않게)
+    if (editingOrderNo) {
+      const { error: e2 } = await sb.from("orders").update(shared).eq("주문번호", editingOrderNo).neq("id", editingId);
+      if (e2) return showErr(`상품 줄은 수정됐지만 같은 주문의 다른 줄 반영 실패: ${e2.message}`);
+    }
     history.replaceState(null, "", "index.html");
     alert("주문이 수정되었습니다.");
   } else {
@@ -477,6 +498,7 @@ $("cancel-edit-btn").addEventListener("click", () => {
 
 function startEdit(order) {
   editingId = order.id;
+  editingOrderNo = order.주문번호 || null;
   editMode = true;
   $("form-title").textContent = "주문 수정";
   $("submit-btn").textContent = "수정 저장";
