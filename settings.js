@@ -167,7 +167,7 @@ function renderProductGroups() {
     });
     // 입력을 마쳤을 때(포커스 아웃)만 그룹 동기화 여부 판단
     inp.addEventListener("change", () => {
-      if (inp.dataset.name === "ACC") return; // ACC는 서로 다른 상품이라 동기화 제외
+      if (inp.dataset.name === "ACC" || inp.dataset.name === "분유포트") return; // ACC·분유포트(일반/슈퍼얼리버드)는 가격이 달라 동기화 제외
       const value = parsePrice(inp.value);
       const siblings = state.판매제품.filter(x => x.name === inp.dataset.name && !(x.code === inp.dataset.code && x.option === inp.dataset.option));
       const isFirstPriceInGroup = siblings.length > 0 && siblings.every(x => x.price == null);
@@ -321,7 +321,7 @@ $("save-btn").addEventListener("click", async () => {
     시작일: state.시작일,
     종료일: state.종료일,
     is_active: state.is_active,
-    판매제품: state.판매제품,
+    판매제품: state.판매제품.filter(p => !p.name.startsWith("[사은품]")), // 예전에 판매제품으로 체크된 사은품 정리 (사은품은 사은품 섹션에서만 관리)
     사은품: state.사은품,
     묶음구성: state.묶음구성,
     updated_at: new Date().toISOString(),

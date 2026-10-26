@@ -45,9 +45,7 @@ $("tier-tabs").querySelectorAll(".tier-btn").forEach(b => {
   b.addEventListener("click", () => {
     currentTier = currentTier === b.dataset.tier ? null : b.dataset.tier;
     currentColorKey = null;
-    renderTierTabs();
-    renderSterilizerGrid();
-    renderAccAvailability();
+    renderAll(); // 3종/4종 선택 시 해제된 액세서리 선택 표시도 다시 그림
   });
 });
 
@@ -268,7 +266,7 @@ function renderAll() {
   renderPicker("acc-grid", accProducts());
   const pots = activeProducts.filter(p => p.name === "분유포트");
   $("pot-label").classList.toggle("hidden", !pots.length);
-  if (!pots.length) $("pot-box").classList.add("hidden");
+  if (!pots.length) { $("pot-box").classList.add("hidden"); $("pot-label").classList.remove("open"); }
   renderPicker("pot-grid", pots);
   renderGiftSection();
   renderCart();
