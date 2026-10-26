@@ -457,8 +457,8 @@ async function saveOrder() {
 
   if (editingId) {
     const it = [...cart.values()][0];
-    // 판매처는 원래 박람회 유지 (다른 박람회 주문을 수정해도 현재 기기의 박람회로 바뀌지 않게)
-    const { 판매처, ...shared } = common;
+    // 판매처·주문일은 원래 값 유지 (다른 박람회 주문을 수정해도 현재 기기의 박람회/오늘 날짜로 바뀌지 않게)
+    const { 판매처, 주문일, ...shared } = common;
     const row = {
       ...shared,
       상품명: it.name, 상품코드: it.code, 옵션명: it.option, 수량: it.qty,
