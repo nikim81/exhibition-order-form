@@ -25,7 +25,7 @@ function fillExpoSelect() {
 let expoPicked = false; // 사용자가 직접 고른 뒤엔 새로고침/실시간 갱신 시 선택 유지
 
 const isGift = (o) => (o.상품명 || "").startsWith("[사은품]");
-const isMain = (o) => (o.상품명 || "").includes("시그니처2플러스");
+const isMain = (o) => (o.상품명 || "").includes("시그니처2플러스") || o.상품명 === "분유포트";
 const isAcc = (o) => o.상품명 === "ACC";
 
 function render() {

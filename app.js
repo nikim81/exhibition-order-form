@@ -238,6 +238,9 @@ function renderAll() {
   renderSterilizerGrid();
   renderAccAvailability();
   renderPicker("acc-grid", accProducts());
+  const pots = activeProducts.filter(p => p.name === "분유포트");
+  $("pot-label").classList.toggle("hidden", !pots.length);
+  renderPicker("pot-grid", pots);
   renderGiftSection();
   renderCart();
 }

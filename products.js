@@ -22,6 +22,7 @@ const PRODUCTS = [
   { name: "ACC", code: "100000", option: "수납형거치대", image: "images/수납현거치대.png" },
   { name: "ACC", code: "100002", option: "다용도걸이", image: "images/다용도걸이.png" },
   { name: "ACC", code: "100162", option: "멀티선반", image: "images/멀티선반.png" },
+  { name: "분유포트", code: "100236", option: "분유포트", image: "images/분유포트.png" },
   { name: "[사은품] 헤이홈 스마트 홈카메라", code: "100205", option: "[증정]홈카메라", image: "images/헤이홈.png" },
   { name: "[사은품] 보아르 쑥쑥 분유쉐이커", code: "100206", option: "[증정]분유쉐이커" },
   { name: "[사은품] 닌자 초퍼 블랜더", code: "100207", option: "[증정]초퍼블랜더" }, // TODO: 임의 코드, 사방넷 실제 코드로 교체 필요
