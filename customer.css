@@ -71,9 +71,16 @@ label {
   text-transform: uppercase;
 }
 
-label.fold { cursor: pointer; user-select: none; }
-label.fold::after { content: " ▸"; }
-label.fold.open::after { content: " ▾"; }
+label.fold {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 16px; padding: 14px 16px;
+  border: 2px solid #efece3; border-radius: 10px; background: #fbfaf7;
+  font-size: 15px; font-weight: 700; color: #1a1a1a; text-transform: none;
+  cursor: pointer; user-select: none;
+}
+label.fold::after { content: "▾"; font-size: 14px; color: #8a8578; transition: transform .15s; transform: rotate(-90deg); }
+label.fold.open { border-color: #1a1a1a; background: #fff; }
+label.fold.open::after { transform: none; }
 
 input, select, textarea {
   border: 1px solid #e5e2d8;

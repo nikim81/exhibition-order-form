@@ -75,8 +75,8 @@ function renderAccAvailability() {
   if (!enabled) pending["acc-grid"].clear();
   $("acc-box").classList.toggle("disabled", !enabled);
   $("acc-label").textContent = enabled
-    ? "선택2. 액세서리 (별도 구매 시)"
-    : "선택2. 액세서리 (3종/4종에 이미 포함되어 있어요)";
+    ? "액세서리 (별도 구매 시)"
+    : "액세서리 (3종/4종에 이미 포함되어 있어요)";
 }
 
 function showErr(msg) {
@@ -193,8 +193,8 @@ function renderGiftSection() {
     currentGiftKey = null;
   }
   $("gift-grid").classList.toggle("disabled", !eligible || editingGift);
-  $("gift-label").textContent = eligible ? "선택3. 사은품"
-    : editMode ? "선택3. 사은품 (주문 수정 중에는 추가할 수 없어요)" : "선택3. 사은품 (선택1 소독기를 먼저 담아주세요)";
+  $("gift-label").textContent = eligible ? "사은품"
+    : editMode ? "사은품 (주문 수정 중에는 추가할 수 없어요)" : "사은품 (젖병소독기를 먼저 담아주세요)";
 
   const grid = $("gift-grid");
   const products = giftProducts();
@@ -250,7 +250,7 @@ function renderCart() {
   $("cart-total").innerHTML = items.length ? `<span>합계</span><strong>${total.toLocaleString()}원</strong>` : "";
 }
 
-// 선택2 액세서리 / 분유포트: 라벨 클릭 시 이미지 펼치기·접기
+// 젖병소독기 / 액세서리 / 분유포트: 라벨 클릭 시 펼치기·접기
 document.querySelectorAll("label.fold").forEach(l =>
   l.addEventListener("click", () => {
     l.classList.toggle("open");
@@ -420,7 +420,7 @@ $("submit-btn").addEventListener("click", async () => {
   }
   // 본품(소독기) 구매 시 박람회에 사은품이 세팅돼 있으면 선택 필수 (수정 모드는 한 줄 단위라 제외)
   if (!editMode && hasSterilizerInCart() && giftProducts().length && !currentGiftKey) {
-    showErr("선택3. 사은품을 선택하세요.");
+    showErr("사은품을 선택하세요.");
     $("gift-grid").scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
