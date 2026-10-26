@@ -71,6 +71,10 @@ label {
   text-transform: uppercase;
 }
 
+label.fold { cursor: pointer; user-select: none; }
+label.fold::after { content: " ▸"; }
+label.fold.open::after { content: " ▾"; }
+
 input, select, textarea {
   border: 1px solid #e5e2d8;
   border-radius: 10px;

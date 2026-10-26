@@ -233,6 +233,13 @@ function renderCart() {
   $("cart-total").innerHTML = items.length ? `<span>합계</span><strong>${total.toLocaleString()}원</strong>` : "";
 }
 
+// 선택2 액세서리 / 분유포트: 라벨 클릭 시 이미지 펼치기·접기
+document.querySelectorAll("label.fold").forEach(l =>
+  l.addEventListener("click", () => {
+    l.classList.toggle("open");
+    $(l.dataset.fold).classList.toggle("hidden", !l.classList.contains("open"));
+  }));
+
 function renderAll() {
   renderTierTabs();
   renderSterilizerGrid();
