@@ -109,11 +109,19 @@
         <button type="button" class="primary" id="steril-add-btn">+ 담기</button>
         <div id="steril-err"></div>
 
-        <label style="margin-top:16px;" id="acc-label" class="fold" data-fold="acc-grid">선택2. 액세서리 (별도 구매 시)</label>
-        <div id="acc-grid" class="swatch-grid hidden"></div>
+        <label style="margin-top:16px;" id="acc-label" class="fold" data-fold="acc-box">선택2. 액세서리 (별도 구매 시)</label>
+        <div id="acc-box" class="hidden">
+          <div id="acc-grid" class="swatch-grid"></div>
+          <button type="button" class="primary" id="acc-add-btn">+ 담기</button>
+          <div id="acc-err" class="add-err"></div>
+        </div>
 
-        <label style="margin-top:16px;" id="pot-label" class="fold" data-fold="pot-grid">분유포트</label>
-        <div id="pot-grid" class="swatch-grid hidden"></div>
+        <label style="margin-top:16px;" id="pot-label" class="fold" data-fold="pot-box">분유포트</label>
+        <div id="pot-box" class="hidden">
+          <div id="pot-grid" class="swatch-grid"></div>
+          <button type="button" class="primary" id="pot-add-btn">+ 담기</button>
+          <div id="pot-err" class="add-err"></div>
+        </div>
 
         <label style="margin-top:16px;" id="gift-label">선택3. 사은품</label>
         <div id="gift-grid" class="swatch-grid"></div>

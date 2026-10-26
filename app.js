@@ -5,6 +5,7 @@ let editMode = false;
 let settings = { 박람회명: "박람회", 판매제품: [] };
 let activeProducts = PRODUCTS;
 let cart = new Map(); // key = `${code}|||${option}` -> {name, code, option, price, qty}
+const pending = { "acc-grid": new Map(), "pot-grid": new Map() }; // 담기 전 선택 상태: key -> qty
 
 const TIER_NAME = {
   "3종": "시그니처2플러스+ACC3종(세로,수납,다용도)",
@@ -71,7 +72,8 @@ function renderSterilizerGrid() {
 
 function renderAccAvailability() {
   const enabled = currentTier !== "3종" && currentTier !== "4종";
-  $("acc-grid").classList.toggle("disabled", !enabled);
+  if (!enabled) pending["acc-grid"].clear();
+  $("acc-box").classList.toggle("disabled", !enabled);
   $("acc-label").textContent = enabled
     ? "선택2. 액세서리 (별도 구매 시)"
     : "선택2. 액세서리 (3종/4종에 이미 포함되어 있어요)";
@@ -99,12 +101,13 @@ $("steril-add-btn").addEventListener("click", () => {
   renderCart();
 });
 
-// ---- 2단: 액세서리 (다중 선택 가능, 토글식 장바구니) ----
+// ---- 2단: 액세서리 / 분유포트 (다중 선택 + 수량 후 "담기") ----
 function renderPicker(containerId, products) {
   const grid = $(containerId);
+  const sel = pending[containerId];
   grid.innerHTML = products.map(p => {
     const key = `${p.code}|||${p.option}`;
-    const item = cart.get(key);
+    const item = sel.has(key) ? { qty: sel.get(key) } : null;
     const master = PRODUCTS.find(x => x.code === p.code && x.image) || p;
     const img = master.image
       ? `<img src="${master.image}" alt="${p.option}">`
@@ -120,23 +123,37 @@ function renderPicker(containerId, products) {
       const key = el.dataset.key;
       const actBtn = e.target.closest("[data-act]");
       if (actBtn) {
-        const item = cart.get(key);
-        if (!item) return;
-        if (actBtn.dataset.act === "inc") item.qty++;
-        else { item.qty--; if (item.qty <= 0) cart.delete(key); }
-      } else if (cart.has(key)) {
-        cart.delete(key);
+        const qty = sel.get(key) + (actBtn.dataset.act === "inc" ? 1 : -1);
+        if (qty <= 0) sel.delete(key); else sel.set(key, qty);
+      } else if (sel.has(key)) {
+        sel.delete(key);
       } else {
-        if (editMode) editReplaceRow();
-        cart.set(key, {
-          name: el.dataset.name, code: el.dataset.code, option: el.dataset.option,
-          price: priceFor(el.dataset.code, el.dataset.option), qty: 1,
-        });
+        if (editMode) sel.clear(); // 수정 모드는 한 줄 단위라 하나만 선택
+        sel.set(key, 1);
       }
       renderAll();
     });
   });
 }
+
+function bindAddBtn(btnId, gridId, errId) {
+  $(btnId).addEventListener("click", () => {
+    const sel = pending[gridId];
+    if (!sel.size) { $(errId).textContent = "⚠ 상품을 선택하세요."; return; }
+    if (editMode) editReplaceRow();
+    sel.forEach((qty, key) => {
+      const [code, option] = key.split("|||");
+      const p = activeProducts.find(x => x.code === code && x.option === option);
+      const it = cart.get(key);
+      if (it) it.qty += qty;
+      else cart.set(key, { name: p.name, code, option, price: priceFor(code, option), qty });
+    });
+    sel.clear();
+    renderAll();
+  });
+}
+bindAddBtn("acc-add-btn", "acc-grid", "acc-err");
+bindAddBtn("pot-add-btn", "pot-grid", "pot-err");
 
 // ---- 3단: 사은품 (박람회별 세팅된 제품만, 단일 선택 + 현장수령/배송) ----
 function giftProducts() {
@@ -212,7 +229,7 @@ $("gift-delivery").addEventListener("change", (e) => {
 });
 
 function renderCart() {
-  $("steril-err").textContent = "";
+  ["steril-err", "acc-err", "pot-err"].forEach(id => $(id).textContent = "");
   const items = [...cart.values()];
   $("cart-list").innerHTML = items.length ? [...cart.entries()].map(([key, it]) => `
     <div class="cart-row">
@@ -247,6 +264,7 @@ function renderAll() {
   renderPicker("acc-grid", accProducts());
   const pots = activeProducts.filter(p => p.name === "분유포트");
   $("pot-label").classList.toggle("hidden", !pots.length);
+  if (!pots.length) $("pot-box").classList.add("hidden");
   renderPicker("pot-grid", pots);
   renderGiftSection();
   renderCart();
@@ -343,6 +361,7 @@ function resetForm() {
   $("expo-name").textContent = settings.박람회명 || "박람회";
   $("f-주문일").value = today();
   cart.clear();
+  Object.values(pending).forEach(m => m.clear());
   currentTier = null;
   currentColorKey = null;
   currentGiftKey = null;
@@ -464,6 +483,7 @@ function startEdit(order) {
   $("f-주문일").value = order.주문일 || "";
 
   cart.clear();
+  Object.values(pending).forEach(m => m.clear());
   const qty = order.수량 || 1;
   cart.set(`${order.상품코드}|||${order.옵션명}`, {
     name: order.상품명, code: order.상품코드, option: order.옵션명, qty,
