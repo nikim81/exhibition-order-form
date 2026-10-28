@@ -375,6 +375,8 @@ function resetForm() {
   currentGiftCartKey = null;
   giftDelivery = "현장";
   editGiftBase = null;
+  // 다음 고객용으로 펼쳐둔 섹션(젖병소독기/액세서리/분유포트)도 기본 접힘 상태로 되돌림
+  document.querySelectorAll("label.fold").forEach(l => { l.classList.remove("open"); $(l.dataset.fold).classList.add("hidden"); });
   renderAll();
   $("f-수취인").value = "";
   $("f-연락처").value = "";
