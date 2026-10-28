@@ -21,7 +21,7 @@ const PRODUCTS = [
   { name: "ACC", code: "100252", option: "세로형거치대", image: "images/세로형거치대.png" },
   { name: "ACC", code: "100253", option: "수납형거치대", image: "images/수납현거치대.png" },
   { name: "ACC", code: "100254", option: "다용도걸이", image: "images/다용도걸이.png" },
-  { name: "ACC", code: "100256", option: "멀티선반", image: "images/멀티선반.png" },
+  { name: "ACC", code: "100256", option: "멀티트레이", image: "images/멀티선반.png" },
   { name: "분유포트", code: "100321", option: "분유포트", image: "images/분유포트.png" },
   { name: "분유포트", code: "100321", option: "분유포트(슈퍼얼리버드·12월 말 출고 예정)" }, // 같은 코드, 옵션명으로 발송 시기 구분
   { name: "[사은품] 헤이홈 스마트 홈카메라", code: "100205", option: "[증정]홈카메라", image: "images/헤이홈.png" },
