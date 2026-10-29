@@ -13,14 +13,19 @@
   .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
   .stat-tile { background: #f9fafb; border: 1px solid #eee; border-radius: 8px; padding: 16px; }
   .stat-tile .label { font-size: 12px; color: #777; }
-  .stat-tile .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+  .stat-row { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  /* 금액이 커지면 sales.js fitStatValues()가 타일 폭에 맞춰 글자를 줄여 한 줄 유지 */
+  .stat-tile { min-width: 0; }
+  .stat-tile .value { font-size: 24px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; }
   #expo-select { max-width: 260px; margin-bottom: 16px; }
   .stat-tile .sub { font-size: 12px; color: #52514e; margin-top: 4px; line-height: 1.5; }
   .share { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
   #share-pie { width: 200px; height: 200px; flex-shrink: 0; }
   #share-pie path { cursor: default; transition: opacity .12s; }
   #share-pie:hover path:not(:hover) { opacity: .45; }
-  .share-legend { flex: 1; min-width: 300px; margin-top: 0; }
+  .share-legend { margin-top: 0; }
+  .share .table-scroll { flex: 1 1 300px; min-width: 0; }
+  @media (max-width: 600px) { .share { justify-content: center; } }
   .share-legend td:nth-child(n+2), .share-legend th:nth-child(n+2) { text-align: right; }
   .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
   .expo-summary-row { cursor: pointer; }
@@ -40,10 +45,10 @@
   <main>
     <div class="card">
       <h2>박람회별 요약 (전체 매출 비교)</h2>
-      <table>
+      <div class="table-scroll"><table>
         <thead><tr><th>박람회</th><th>건수</th><th>수량</th><th>매출액</th></tr></thead>
         <tbody id="expo-summary-tbody"></tbody>
-      </table>
+      </table></div>
     </div>
 
     <div class="card">
@@ -69,29 +74,29 @@
       <h2>매출 비중</h2>
       <div class="share">
         <svg id="share-pie" viewBox="0 0 200 200" role="img" aria-label="매출 비중 원형 그래프"></svg>
-        <table class="share-legend">
+        <div class="table-scroll"><table class="share-legend">
           <thead><tr><th>구분</th><th>수량</th><th>매출액</th><th>비중</th></tr></thead>
           <tbody id="share-tbody"></tbody>
-        </table>
+        </table></div>
       </div>
 
       <h2>일별 요약</h2>
-      <table>
+      <div class="table-scroll"><table>
         <thead><tr><th>날짜</th><th>본품 건수</th><th>본품 수량</th><th>ACC 건수</th><th>ACC 수량</th><th>매출액</th></tr></thead>
         <tbody id="daily-tbody"></tbody>
-      </table>
+      </table></div>
 
       <h2 style="margin-top:24px;">메인 제품별 판매 현황 <span id="main-qty-badge" style="font-weight:400;font-size:13px;color:#777;"></span></h2>
-      <table>
+      <div class="table-scroll"><table>
         <thead><tr><th>상품명</th><th>옵션명(컬러)</th><th>건수</th><th>수량</th></tr></thead>
         <tbody id="main-tbody"></tbody>
-      </table>
+      </table></div>
 
       <h2 style="margin-top:24px;">액세서리(ACC)별 판매 현황 <span id="acc-qty-badge" style="font-weight:400;font-size:13px;color:#777;"></span></h2>
-      <table>
+      <div class="table-scroll"><table>
         <thead><tr><th>상품명</th><th>옵션명</th><th>건수</th><th>수량</th></tr></thead>
         <tbody id="acc-tbody"></tbody>
-      </table>
+      </table></div>
     </div>
   </main>
 </div>

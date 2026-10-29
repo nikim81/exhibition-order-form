@@ -42,6 +42,16 @@ const SHARE_GROUPS = [
   { label: "사은품 배송비", color: "#008300", match: isGift },
 ];
 
+// 타일 숫자가 길면(큰 금액) 넘치지 않을 때까지 글자 크기를 24px → 12px 사이에서 줄임
+function fitStatValues() {
+  document.querySelectorAll(".stat-tile .value").forEach(el => {
+    let size = 24;
+    el.style.fontSize = `${size}px`;
+    while (el.scrollWidth > el.clientWidth && size > 12) el.style.fontSize = `${--size}px`;
+  });
+}
+window.addEventListener("resize", fitStatValues);
+
 function renderShare(rows) {
   const groups = SHARE_GROUPS.map(g => {
     const list = rows.filter(g.match);
@@ -91,6 +101,7 @@ function render() {
   $("stat-pot-qty").textContent = `${qty(pots)}개`;
   $("stat-pot-sub").textContent = `일반 ${qty(pots.filter(o => !isEarlyBird(o)))} · 슈퍼얼리버드 ${qty(pots.filter(isEarlyBird))}`;
   renderShare(rows);
+  fitStatValues();
 
   renderGroup("main-tbody", "main-qty-badge", rows.filter(isMain));
   renderGroup("acc-tbody", "acc-qty-badge", rows.filter(isAcc));

@@ -53,7 +53,16 @@ tbody tr:hover { background: #f8fafc; }
 .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .card-header h2 { margin: 0; font-size: 16px; }
 .card-header button, .card-header select, .card-header input, .card-header a { flex-shrink: 0; white-space: nowrap; }
-.card-header .right { display: flex; gap: 8px; align-items: center; }
+.card-header .right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.card-header .right button { margin-left: 0; }
+/* 폭이 넓은 표는 페이지 전체가 아니라 표 안에서만 가로 스크롤 (폰에서 화면이 축소돼 깨지는 것 방지) */
+.table-scroll { overflow-x: auto; }
+@media (max-width: 600px) {
+  header { padding: 14px 16px; }
+  main { margin: 16px auto; padding: 0 10px; }
+  .card { padding: 16px 14px; }
+  #search, #expo-filter, #expo-select { max-width: none !important; flex: 1 1 100%; }
+}
 .filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
 #count-badge { font-size: 13px; color: var(--ink-soft); font-weight: 400; }
 .hidden { display: none !important; }
