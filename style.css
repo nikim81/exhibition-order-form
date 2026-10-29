@@ -40,7 +40,10 @@ table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12p
 th, td { border-bottom: 1px solid var(--line); padding: 10px 10px; text-align: left; white-space: nowrap; }
 th { background: #fafbfc; color: var(--ink-soft); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; position: sticky; top: 0; }
 tbody tr:hover { background: #f8fafc; }
-#table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; }
+#table-wrap { overflow-x: auto; max-height: max(480px, calc(100vh - 260px)); overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; }
+/* 태블릿에서 가로 스크롤 끝까지 가지 않아도 수정/삭제 버튼이 보이게 오른쪽 고정 */
+#table-wrap td.actions, #table-wrap th:last-child { position: sticky; right: 0; background: #fff; box-shadow: -1px 0 0 var(--line); }
+#table-wrap th:last-child { z-index: 1; background: #fafbfc; }
 #table-wrap table { margin-top: 0; }
 #table-wrap th:first-child, #table-wrap td:first-child { padding-left: 14px; }
 .actions button { font-size: 12px; padding: 5px 10px; margin-right: 4px; cursor: pointer; border-radius: 6px; }

@@ -17,8 +17,10 @@ function fillExpoFilter() {
   const prev = sel.value;
   const expos = [...new Set(orders.map(o => o.판매처).filter(Boolean))];
   sel.innerHTML = `<option value="">전체 박람회</option>` + expos.map(e => `<option value="${esc(e)}">${esc(e)}</option>`).join("");
-  sel.value = expos.includes(prev) ? prev : (expos[0] || "");
+  // 직접 고른 뒤엔("전체 박람회" 포함) 실시간 갱신 때 첫 박람회로 되돌아가지 않게 유지
+  sel.value = expoPicked ? (expos.includes(prev) ? prev : "") : (expos[0] || "");
 }
+let expoPicked = false;
 
 function activeOrders() { return orders.filter(o => !o.deleted_at); }
 function trashedOrders() { return orders.filter(o => o.deleted_at); }
@@ -91,7 +93,7 @@ $("trash-toggle-btn").addEventListener("click", () => {
 
 $("search").addEventListener("input", renderTable);
 $("search-btn").addEventListener("click", renderTable);
-$("expo-filter").addEventListener("change", renderTable);
+$("expo-filter").addEventListener("change", () => { expoPicked = true; renderTable(); });
 $("refresh-btn").addEventListener("click", loadOrders);
 
 function isOnSiteGift(o) {
@@ -138,8 +140,11 @@ $("logout-btn").addEventListener("click", async () => {
 });
 
 // realtime: pick up orders entered from other devices
+// 주문 1건이 여러 줄이라 이벤트가 연달아 오므로, 몰아서 한 번만 다시 불러옴 (태블릿 부하 방지)
+let reloadTimer;
+function scheduleReload() { clearTimeout(reloadTimer); reloadTimer = setTimeout(loadOrders, 800); }
 sb.channel("orders-changes")
-  .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, loadOrders)
+  .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, scheduleReload)
   .subscribe();
 
 (async () => {

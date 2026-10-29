@@ -119,8 +119,11 @@ $("logout-btn").addEventListener("click", async () => {
   location.href = "index.html";
 });
 
+// 주문 1건이 여러 줄이라 이벤트가 연달아 오므로, 몰아서 한 번만 다시 불러옴 (태블릿 부하 방지)
+let reloadTimer;
+function scheduleReload() { clearTimeout(reloadTimer); reloadTimer = setTimeout(loadOrders, 800); }
 sb.channel("orders-changes-sales")
-  .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, loadOrders)
+  .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, scheduleReload)
   .subscribe();
 
 (async () => {
