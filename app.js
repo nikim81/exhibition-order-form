@@ -565,7 +565,8 @@ $("login-btn").addEventListener("click", async () => {
   if (error) $("login-err").textContent = error.message;
 });
 
-$("logout-btn").addEventListener("click", () => sb.auth.signOut());
+// 모든 기기가 같은 계정을 쓰므로 이 기기만 로그아웃 (기본값 global은 다른 태블릿 세션까지 전부 끊음)
+$("logout-btn").addEventListener("click", () => sb.auth.signOut({ scope: "local" }));
 
 // 탭 복귀/토큰 갱신 때도 이 콜백이 다시 호출되므로, 같은 사용자의 재호출은 무시 (입력 중인 폼이 초기화되는 것 방지)
 let initedUserId = null;

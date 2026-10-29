@@ -342,7 +342,7 @@ $("save-btn").addEventListener("click", async () => {
 });
 
 $("logout-btn").addEventListener("click", async () => {
-  await sb.auth.signOut();
+  await sb.auth.signOut({ scope: "local" });
   location.href = "index.html";
 });
 

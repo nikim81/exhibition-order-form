@@ -176,7 +176,7 @@ function renderGroup(tbodyId, badgeId, rows) {
 $("expo-select").addEventListener("change", () => { expoPicked = true; render(); });
 $("refresh-btn").addEventListener("click", loadOrders);
 $("logout-btn").addEventListener("click", async () => {
-  await sb.auth.signOut();
+  await sb.auth.signOut({ scope: "local" });
   location.href = "index.html";
 });
 
