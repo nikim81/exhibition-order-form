@@ -15,6 +15,14 @@
   .stat-tile .label { font-size: 12px; color: #777; }
   .stat-tile .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
   #expo-select { max-width: 260px; margin-bottom: 16px; }
+  .stat-tile .sub { font-size: 12px; color: #52514e; margin-top: 4px; line-height: 1.5; }
+  .share { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
+  #share-pie { width: 200px; height: 200px; flex-shrink: 0; }
+  #share-pie path { cursor: default; transition: opacity .12s; }
+  #share-pie:hover path:not(:hover) { opacity: .45; }
+  .share-legend { flex: 1; min-width: 300px; margin-top: 0; }
+  .share-legend td:nth-child(n+2), .share-legend th:nth-child(n+2) { text-align: right; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
   .expo-summary-row { cursor: pointer; }
   .expo-summary-row:hover { background: #f9fafb; }
 </style>
@@ -54,6 +62,17 @@
         <div class="stat-tile"><div class="label">총 수량</div><div class="value" id="stat-qty">-</div></div>
         <div class="stat-tile"><div class="label">총 주문금액</div><div class="value" id="stat-amount">-</div></div>
         <div class="stat-tile"><div class="label">사은품 지급 건수</div><div class="value" id="stat-gift-count">-</div><div style="font-size:12px;color:#777;margin-top:2px;" id="stat-gift-fee"></div></div>
+        <div class="stat-tile"><div class="label">젖병소독기 총 수량</div><div class="value" id="stat-steril-qty">-</div><div class="sub" id="stat-steril-sub"></div></div>
+        <div class="stat-tile"><div class="label">분유포트 총 수량</div><div class="value" id="stat-pot-qty">-</div><div class="sub" id="stat-pot-sub"></div></div>
+      </div>
+
+      <h2>매출 비중</h2>
+      <div class="share">
+        <svg id="share-pie" viewBox="0 0 200 200" role="img" aria-label="매출 비중 원형 그래프"></svg>
+        <table class="share-legend">
+          <thead><tr><th>구분</th><th>수량</th><th>매출액</th><th>비중</th></tr></thead>
+          <tbody id="share-tbody"></tbody>
+        </table>
       </div>
 
       <h2>일별 요약</h2>

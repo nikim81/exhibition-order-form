@@ -27,6 +27,48 @@ let expoPicked = false; // 사용자가 직접 고른 뒤엔 새로고침/실시
 const isGift = (o) => (o.상품명 || "").startsWith("[사은품]");
 const isMain = (o) => (o.상품명 || "").includes("시그니처2플러스") || o.상품명 === "분유포트";
 const isAcc = (o) => o.상품명 === "ACC";
+const isSteril = (o) => (o.상품명 || "").includes("시그니처2플러스");
+const isPot = (o) => o.상품명 === "분유포트";
+const isEarlyBird = (o) => (o.옵션명 || "").includes("슈퍼얼리버드");
+const sterilTier = (o) => o.상품명.includes("ACC4종") ? "4종" : o.상품명.includes("ACC3종") ? "3종" : "단품";
+
+// 매출 비중: 구분별 색은 고정 (필터로 0원 구분이 빠져도 나머지 색이 바뀌지 않게)
+const SHARE_GROUPS = [
+  { label: "소독기 단품", color: "#2a78d6", match: o => isSteril(o) && sterilTier(o) === "단품" },
+  { label: "소독기 3종", color: "#eb6834", match: o => isSteril(o) && sterilTier(o) === "3종" },
+  { label: "소독기 4종", color: "#1baf7a", match: o => isSteril(o) && sterilTier(o) === "4종" },
+  { label: "분유포트", color: "#eda100", match: isPot },
+  { label: "액세서리(ACC)", color: "#e87ba4", match: isAcc },
+  { label: "사은품 배송비", color: "#008300", match: isGift },
+];
+
+function renderShare(rows) {
+  const groups = SHARE_GROUPS.map(g => {
+    const list = rows.filter(g.match);
+    return { ...g, qty: list.reduce((s, o) => s + (o.수량 || 0), 0), amount: list.reduce((s, o) => s + (Number(o.주문금액) || 0), 0) };
+  }).filter(g => g.amount > 0);
+  const total = groups.reduce((s, g) => s + g.amount, 0);
+  const pct = (a) => `${(a / total * 100).toFixed(1)}%`;
+
+  // 도넛: 조각 사이 2px 흰 간격, 한 조각뿐이면 원 전체
+  let start = -Math.PI / 2;
+  const pt = (r, a) => `${(100 + r * Math.cos(a)).toFixed(2)} ${(100 + r * Math.sin(a)).toFixed(2)}`;
+  $("share-pie").innerHTML = !total
+    ? `<circle cx="100" cy="100" r="72" fill="none" stroke="#e6e8ec" stroke-width="40"/><text x="100" y="105" text-anchor="middle" font-size="13" fill="#777">데이터 없음</text>`
+    : groups.map(g => {
+        const sweep = g.amount / total * Math.PI * 2;
+        const end = start + sweep, large = sweep > Math.PI ? 1 : 0;
+        const d = groups.length === 1
+          ? `M ${pt(92, 0)} A 92 92 0 1 1 ${pt(92, Math.PI)} A 92 92 0 1 1 ${pt(92, 0)} M ${pt(52, 0)} A 52 52 0 1 0 ${pt(52, Math.PI)} A 52 52 0 1 0 ${pt(52, 0)} Z`
+          : `M ${pt(92, start)} A 92 92 0 ${large} 1 ${pt(92, end)} L ${pt(52, end)} A 52 52 0 ${large} 0 ${pt(52, start)} Z`;
+        start = end;
+        return `<path d="${d}" fill="${g.color}" fill-rule="evenodd" stroke="#fff" stroke-width="2"><title>${g.label}: ${g.amount.toLocaleString()}원 (${pct(g.amount)})</title></path>`;
+      }).join("") + `<text x="100" y="96" text-anchor="middle" font-size="11" fill="#52514e">${groups.some(g => g.match === isGift) ? "합계(배송비 포함)" : "합계"}</text><text x="100" y="114" text-anchor="middle" font-size="14" font-weight="700" fill="#0b0b0b">${total.toLocaleString()}원</text>`;
+
+  $("share-tbody").innerHTML = groups.length
+    ? groups.map(g => `<tr><td><span class="dot" style="background:${g.color}"></span>${g.label}</td><td>${g.qty}개</td><td>${g.amount.toLocaleString()}원</td><td>${pct(g.amount)}</td></tr>`).join("")
+    : `<tr><td colspan="4" style="color:#999;">데이터 없음</td></tr>`;
+}
 
 function render() {
   const expo = $("expo-select").value;
@@ -41,6 +83,14 @@ function render() {
   $("stat-gift-count").textContent = `${giftRows.length}건`;
   const giftFeeTotal = giftRows.reduce((s, o) => s + (Number(o.주문금액) || 0), 0);
   $("stat-gift-fee").textContent = giftFeeTotal > 0 ? `배송비 ${giftFeeTotal.toLocaleString()}원 포함` : "";
+
+  const qty = (list) => list.reduce((s, o) => s + (o.수량 || 0), 0);
+  const steril = rows.filter(isSteril), pots = rows.filter(isPot);
+  $("stat-steril-qty").textContent = `${qty(steril)}대`;
+  $("stat-steril-sub").textContent = ["단품", "3종", "4종"].map(t => `${t} ${qty(steril.filter(o => sterilTier(o) === t))}`).join(" · ");
+  $("stat-pot-qty").textContent = `${qty(pots)}개`;
+  $("stat-pot-sub").textContent = `일반 ${qty(pots.filter(o => !isEarlyBird(o)))} · 슈퍼얼리버드 ${qty(pots.filter(isEarlyBird))}`;
+  renderShare(rows);
 
   renderGroup("main-tbody", "main-qty-badge", rows.filter(isMain));
   renderGroup("acc-tbody", "acc-qty-badge", rows.filter(isAcc));
