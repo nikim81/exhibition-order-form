@@ -26,7 +26,8 @@ const DRAFT_KEY = "orderDraft";
 const DRAFT_FIELDS = ["f-수취인", "f-연락처", "f-우편번호", "f-주소", "f-상세주소", "f-배송메세지"];
 const DRAFT_CHECKS = ["f-계좌이체", "f-카드결제", "f-동의", "f-마케팅동의"];
 let savedDraft = null;
-try { savedDraft = JSON.parse(sessionStorage.getItem(DRAFT_KEY)); } catch {}
+function readDraft() { try { savedDraft = JSON.parse(sessionStorage.getItem(DRAFT_KEY)); } catch {} }
+readDraft();
 let draftReady = false; // 복원 전에는 첫 화면 그리기가 저장된 초안을 덮어쓰지 않게 함
 function saveDraft() {
   if (!draftReady || editMode) return;
@@ -617,6 +618,8 @@ sb.auth.onAuthStateChange((event, session) => {
     if (session.user.id === initedUserId) return;
     initedUserId = session.user.id;
     // 콜백 안에서 바로 await sb.* 하면 auth 락 교착 가능 → 다음 틱으로 넘김
+    // 로그인이 풀렸다가 다시 로그인한 경우에도 작성하던 주문을 복원 (아래 resetForm이 임시저장을 지우기 전에 읽어 둠)
+    readDraft();
     setTimeout(async () => {
       const ready = await loadSettings();
       if (ready) { resetForm(); restoreDraft(); loadEditFromUrl(); }
