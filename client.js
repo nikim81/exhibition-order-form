@@ -4,6 +4,18 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const COLUMNS = ["판매처","주문번호","주문일","상품명","상품코드","옵션명","수량","주문금액","업체명","수취인","연락처","우편번호","주소","배송희망일자","배송메세지"];
 
+// 홈 화면 앱은 계속 켜져 있어 새 배포가 반영되지 않으므로, 앱 화면으로 돌아올 때 서버의 버전(HTML의 ?v=)이 바뀌었으면 새로고침
+// 배포 시 각 HTML의 ?v= 값만 올리면 됨 (작성 중인 주문은 app.js 임시저장으로 복원)
+const APP_VERSION = (document.currentScript.src.match(/[?&]v=([\w-]+)/) || [])[1];
+document.addEventListener("visibilitychange", async () => {
+  if (document.hidden || !APP_VERSION) return;
+  try {
+    const html = await (await fetch(location.pathname, { cache: "no-store" })).text();
+    const latest = (html.match(/client\.js\?v=([\w-]+)/) || [])[1];
+    if (latest && latest !== APP_VERSION) { window.autoReloading = true; location.reload(); }
+  } catch {}
+});
+
 // 고객이 직접 입력하는 값(수취인/주소/배송메세지 등)을 innerHTML로 그릴 때 이스케이프 처리 (저장형 XSS 방지)
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
