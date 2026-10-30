@@ -1,11 +1,10 @@
 const $ = (id) => document.getElementById(id);
 sessionStorage.removeItem("adminUnlocked"); // 주문 입력 화면을 거치면 관리자 PIN을 다시 물어보게 함
-let editingId = null;
-let editingOrderNo = null;
+let editOrder = null; // 수정 중인 주문: { 주문번호, 판매처, 주문일, ids: 불러온 줄 id들 }
 let editMode = false;
 let settings = { 박람회명: "박람회", 판매제품: [] };
 let activeProducts = PRODUCTS;
-let cart = new Map(); // key = `${code}|||${option}` -> {name, code, option, price, qty}
+let cart = new Map(); // key = `${code}|||${option}` -> {name, code, option, price, qty, id?} (id = 수정 시 기존 DB 줄)
 const pending = { "acc-grid": new Map(), "pot-grid": new Map() }; // 담기 전 선택 상태: key -> qty
 
 const TIER_NAME = {
@@ -19,12 +18,6 @@ let currentGiftKey = null; // code|||option of the selected gift (no delivery su
 let currentGiftCartKey = null; // actual key this gift is stored under in `cart`
 let giftDelivery = "현장"; // "현장" | "배송"
 let editGiftBase = null; // 사은품 주문 수정 시 원본 상품 정보 (박람회 사은품 목록에 없어도 전달방식 변경 가능하게)
-
-// 수정 모드에서 다른 상품을 고르면 그 줄을 통째로 교체 (사은품 수정 상태도 함께 해제)
-function editReplaceRow() {
-  cart.clear();
-  currentGiftKey = null; currentGiftCartKey = null; editGiftBase = null;
-}
 
 function tierProducts() { return activeProducts.filter(p => p.name === TIER_NAME[currentTier]); }
 function accProducts() { return activeProducts.filter(p => p.name === "ACC"); }
@@ -94,8 +87,10 @@ $("steril-add-btn").addEventListener("click", () => {
   if (!p) { currentColorKey = null; renderSterilizerGrid(); stErr("소독기 컬러를 다시 선택하세요."); return; }
   // 선택1(소독기)은 주문당 1대만 (여러 대 구매 시 배송지별로 주문을 따로 입력)
   if (!editMode && hasSterilizerInCart()) { stErr("이미 선택된 소독기가 있습니다. 선택한 상품에서 삭제 후 다시 담아주세요."); return; }
-  if (editMode) editReplaceRow();
-  cart.set(currentColorKey, { name: p.name, code, option, price: priceFor(code, option), qty: 1 });
+  // 수정 모드: 기존 소독기 줄을 새 소독기로 교체 (예: 단품 → 4종). 같은 줄 id를 이어받아 저장 시 그 줄을 수정
+  let keepId;
+  if (editMode) cart.forEach((it, k) => { if (isSterilizerItem(it)) { keepId = it.id; cart.delete(k); } });
+  cart.set(currentColorKey, { name: p.name, code, option, price: priceFor(code, option), qty: 1, id: keepId });
   currentColorKey = null;
   renderSterilizerGrid();
   renderGiftSection();
@@ -129,7 +124,6 @@ function renderPicker(containerId, products) {
       } else if (sel.has(key)) {
         sel.delete(key);
       } else {
-        if (editMode) sel.clear(); // 수정 모드는 한 줄 단위라 하나만 선택
         sel.set(key, 1);
       }
       renderAll();
@@ -141,7 +135,6 @@ function bindAddBtn(btnId, gridId, errId) {
   $(btnId).addEventListener("click", () => {
     const sel = pending[gridId];
     if (!sel.size) { $(errId).textContent = "⚠ 상품을 선택하세요."; return; }
-    if (editMode) editReplaceRow();
     sel.forEach((qty, key) => {
       const [code, option] = key.split("|||");
       const p = activeProducts.find(x => x.code === code && x.option === option);
@@ -162,10 +155,8 @@ function giftProducts() {
 }
 
 // 사은품은 소독기 본품 구매 사은품이라, 선택1에서 담은 소독기가 있어야만 선택 가능
-function hasSterilizerInCart() {
-  const tierNames = Object.values(TIER_NAME);
-  return [...cart.values()].some(it => tierNames.includes(it.name));
-}
+function isSterilizerItem(it) { return Object.values(TIER_NAME).includes(it.name); }
+function hasSterilizerInCart() { return [...cart.values()].some(isSterilizerItem); }
 
 function addGiftToCart() {
   const [code, option] = currentGiftKey.split("|||");
@@ -173,6 +164,7 @@ function addGiftToCart() {
   if (!p) return;
   const isDelivery = giftDelivery === "배송";
   const cartKey = isDelivery ? `${currentGiftKey}|||배송` : currentGiftKey;
+  const prevId = currentGiftCartKey && cart.get(currentGiftCartKey)?.id; // 현장↔배송만 바꾸면 기존 줄 수정
   if (currentGiftCartKey && currentGiftCartKey !== cartKey) cart.delete(currentGiftCartKey);
   cart.set(cartKey, {
     name: isDelivery ? `${p.name}(배송)` : p.name,
@@ -180,27 +172,26 @@ function addGiftToCart() {
     option: isDelivery ? `${p.option}(배송)` : p.option,
     price: isDelivery ? 2500 : null,
     qty: 1,
+    id: prevId || undefined,
   });
   currentGiftCartKey = cartKey;
 }
 
 function renderGiftSection() {
-  const editingGift = editMode && !!currentGiftKey; // 사은품 주문 수정: 상품은 고정, 현장/배송만 변경 가능
-  // 수정 모드는 한 줄 단위 저장이라 새 사은품을 추가할 수 없음 (추가해도 저장 시 누락됨)
-  const eligible = editMode ? editingGift : hasSterilizerInCart();
-  if (!eligible && currentGiftCartKey) {
+  const eligible = hasSterilizerInCart();
+  // 소독기를 빼면 사은품도 같이 뺌 (수정 모드는 기존 사은품 줄을 실수로 지우지 않게 유지)
+  if (!eligible && currentGiftCartKey && !editMode) {
     cart.delete(currentGiftCartKey);
     currentGiftCartKey = null;
     currentGiftKey = null;
   }
-  $("gift-grid").classList.toggle("disabled", !eligible || editingGift);
-  $("gift-label").textContent = eligible ? "사은품"
-    : editMode ? "사은품 (주문 수정 중에는 추가할 수 없어요)" : "사은품 (젖병소독기를 먼저 담아주세요)";
+  $("gift-grid").classList.toggle("disabled", !eligible);
+  $("gift-label").textContent = eligible ? "사은품" : "사은품 (젖병소독기를 먼저 담아주세요)";
 
   const grid = $("gift-grid");
   const products = giftProducts();
-  // 세팅에서 체크한 사은품이 없으면 섹션 자체를 숨김
-  const noGifts = !products.length && !editingGift;
+  // 세팅에서 체크한 사은품이 없으면 섹션 자체를 숨김 (수정 중인 주문에 사은품이 있으면 현장/배송 변경용으로 표시)
+  const noGifts = !products.length && !currentGiftKey;
   $("gift-label").classList.toggle("hidden", noGifts);
   grid.classList.toggle("hidden", noGifts);
   grid.innerHTML = products.map(p => {
@@ -359,8 +350,7 @@ $("addr-modal-close").addEventListener("click", closeAddrModal);
 // ---- default field values ----
 function today() { return new Date().toLocaleDateString("sv-SE"); }
 function resetForm() {
-  editingId = null;
-  editingOrderNo = null;
+  editOrder = null;
   editMode = false;
   $("form-title").textContent = "주문 입력";
   $("submit-btn").textContent = "주문 저장";
@@ -436,7 +426,7 @@ $("submit-btn").addEventListener("click", async () => {
     showErr("상품을 1개 이상 선택하세요.");
     return;
   }
-  // 본품(소독기) 구매 시 박람회에 사은품이 세팅돼 있으면 선택 필수 (수정 모드는 한 줄 단위라 제외)
+  // 본품(소독기) 구매 시 박람회에 사은품이 세팅돼 있으면 선택 필수 (수정 모드는 기존 주문이라 제외)
   if (!editMode && hasSterilizerInCart() && giftProducts().length && !currentGiftKey) {
     showErr("사은품을 선택하세요.");
     $("gift-grid").scrollIntoView({ behavior: "smooth", block: "center" });
@@ -457,21 +447,40 @@ $("submit-btn").addEventListener("click", async () => {
 async function saveOrder() {
   const common = commonFields();
 
-  if (editingId) {
-    const it = [...cart.values()][0];
+  const product = it => ({
+    상품명: it.name, 상품코드: it.code, 옵션명: it.option, 수량: it.qty,
+    주문금액: it.price != null ? it.price * it.qty : null,
+  });
+
+  if (editMode) {
     // 판매처·주문일은 원래 값 유지 (다른 박람회 주문을 수정해도 현재 기기의 박람회/오늘 날짜로 바뀌지 않게)
     const { 판매처, 주문일, ...shared } = common;
-    const row = {
-      ...shared,
-      상품명: it.name, 상품코드: it.code, 옵션명: it.option, 수량: it.qty,
-      주문금액: it.price != null ? it.price * it.qty : null,
-    };
-    const { error } = await sb.from("orders").update(row).eq("id", editingId);
-    if (error) return showErr(error.message);
-    // 고객 정보(수취인/주소/결제 등)는 같은 주문번호의 다른 상품 줄에도 반영 (배송지가 갈라지지 않게)
-    if (editingOrderNo) {
-      const { error: e2 } = await sb.from("orders").update(shared).eq("주문번호", editingOrderNo).neq("id", editingId);
-      if (e2) return showErr(`상품 줄은 수정됐지만 같은 주문의 다른 줄 반영 실패: ${e2.message}`);
+    const 주문번호 = editOrder.주문번호 || genOrderNo();
+    const items = [...cart.values()];
+    // 1) 새로 담은 상품 → 같은 주문번호로 새 줄 추가. 받은 id를 바로 기록해 두어 아래 단계가 실패해 다시 저장해도 중복 추가되지 않게 함
+    const added = items.filter(it => !it.id);
+    if (added.length) {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return showErr("로그인이 만료되었습니다. 다시 로그인해 주세요.");
+      const { data, error } = await sb.from("orders").insert(added.map(it => ({
+        ...shared, ...product(it), 주문번호,
+        판매처: editOrder.판매처 || settings.박람회명 || "박람회",
+        주문일: editOrder.주문일 || today(),
+        created_by: user.id,
+      }))).select("id");
+      if (error) return showErr(error.message);
+      added.forEach((it, i) => { it.id = data[i].id; editOrder.ids.push(it.id); });
+    }
+    // 2) 기존 줄 → 상품 변경분 + 고객 정보(수취인/주소/결제 등) 반영 (같은 주문의 모든 줄이 같은 배송지를 갖게)
+    for (const it of items.filter(it => !added.includes(it))) {
+      const { error } = await sb.from("orders").update({ ...shared, ...product(it), 주문번호 }).eq("id", it.id);
+      if (error) return showErr(error.message);
+    }
+    // 3) 선택한 상품에서 뺀 줄 → 휴지통으로 (주문목록 휴지통에서 복원 가능)
+    const removed = editOrder.ids.filter(id => !items.some(it => it.id === id));
+    if (removed.length) {
+      const { error } = await sb.from("orders").update({ deleted_at: new Date().toISOString() }).in("id", removed);
+      if (error) return showErr(error.message);
     }
     history.replaceState(null, "", "index.html");
     alert("주문이 수정되었습니다.");
@@ -479,13 +488,7 @@ async function saveOrder() {
     const 주문번호 = genOrderNo();
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return showErr("로그인이 만료되었습니다. 다시 로그인해 주세요.");
-    const rows = [...cart.values()].map(it => ({
-      ...common,
-      주문번호,
-      상품명: it.name, 상품코드: it.code, 옵션명: it.option, 수량: it.qty,
-      주문금액: it.price != null ? it.price * it.qty : null,
-      created_by: user.id,
-    }));
+    const rows = [...cart.values()].map(it => ({ ...common, 주문번호, ...product(it), created_by: user.id }));
     const { error } = await sb.from("orders").insert(rows);
     if (error) return showErr(error.message);
     alert("주문이 접수되었습니다!");
@@ -498,9 +501,9 @@ $("cancel-edit-btn").addEventListener("click", () => {
   history.replaceState(null, "", "index.html");
 });
 
-function startEdit(order) {
-  editingId = order.id;
-  editingOrderNo = order.주문번호 || null;
+// 주문목록에서 누른 줄이 속한 주문(같은 주문번호의 모든 줄)을 통째로 불러와 새 주문처럼 담기/빼기/교체
+function startEdit(order, rows) {
+  editOrder = { 주문번호: order.주문번호 || null, 판매처: order.판매처, 주문일: order.주문일, ids: rows.map(r => r.id) };
   editMode = true;
   $("form-title").textContent = "주문 수정";
   $("submit-btn").textContent = "수정 저장";
@@ -510,29 +513,32 @@ function startEdit(order) {
 
   cart.clear();
   Object.values(pending).forEach(m => m.clear());
-  const qty = order.수량 || 1;
-  cart.set(`${order.상품코드}|||${order.옵션명}`, {
-    name: order.상품명, code: order.상품코드, option: order.옵션명, qty,
-    price: order.주문금액 != null ? order.주문금액 / qty : priceFor(order.상품코드, order.옵션명),
-  });
-  const matchedTier = Object.keys(TIER_NAME).find(t => TIER_NAME[t] === order.상품명);
-  currentTier = matchedTier || null;
-  currentColorKey = matchedTier ? `${order.상품코드}|||${order.옵션명}` : null;
+  currentTier = null;
+  currentColorKey = null;
   currentGiftKey = null;
   currentGiftCartKey = null;
   giftDelivery = "현장";
   editGiftBase = null;
-  if ((order.상품명 || "").startsWith("[사은품]")) {
-    const opt = order.옵션명 || "";
-    const isDel = opt.endsWith("(배송)");
-    const baseOpt = opt.replace(/\(배송\)$/, "");
-    editGiftBase = { name: order.상품명.replace(/\(배송\)$/, ""), code: order.상품코드, option: baseOpt };
-    currentGiftKey = `${order.상품코드}|||${baseOpt}`;
-    giftDelivery = isDel ? "배송" : "현장";
-    currentGiftCartKey = isDel ? `${currentGiftKey}|||배송` : currentGiftKey;
-    cart.clear();
-    cart.set(currentGiftCartKey, { name: order.상품명, code: order.상품코드, option: opt, qty, price: order.주문금액 != null ? order.주문금액 / qty : null });
-  }
+  rows.forEach(r => {
+    const qty = r.수량 || 1;
+    const item = {
+      id: r.id, name: r.상품명, code: r.상품코드, option: r.옵션명, qty,
+      price: r.주문금액 != null ? r.주문금액 / qty : priceFor(r.상품코드, r.옵션명),
+    };
+    let key = `${r.상품코드}|||${r.옵션명}`;
+    if ((r.상품명 || "").startsWith("[사은품]")) {
+      const opt = r.옵션명 || "";
+      const isDel = opt.endsWith("(배송)");
+      const baseOpt = opt.replace(/\(배송\)$/, "");
+      editGiftBase = { name: r.상품명.replace(/\(배송\)$/, ""), code: r.상품코드, option: baseOpt };
+      currentGiftKey = `${r.상품코드}|||${baseOpt}`;
+      giftDelivery = isDel ? "배송" : "현장";
+      key = currentGiftCartKey = isDel ? `${currentGiftKey}|||배송` : currentGiftKey;
+    }
+    if (cart.has(key)) key += `|||${r.id}`; // 같은 상품이 두 줄이면 따로 유지
+    cart.set(key, item);
+    if (isSterilizerItem(item)) currentTier = Object.keys(TIER_NAME).find(t => TIER_NAME[t] === item.name);
+  });
   renderAll();
 
   $("f-수취인").value = order.수취인 || "";
@@ -552,7 +558,14 @@ async function loadEditFromUrl() {
   const id = new URLSearchParams(location.search).get("edit");
   if (!id) return;
   const { data, error } = await sb.from("orders").select("*").eq("id", id).single();
-  if (!error && data) startEdit(data);
+  if (error || !data) return;
+  let rows = [data];
+  if (data.주문번호) {
+    const res = await sb.from("orders").select("*").eq("주문번호", data.주문번호).is("deleted_at", null).order("created_at").order("id");
+    if (res.error) return showErr(`주문을 불러오지 못했습니다: ${res.error.message}`);
+    rows = res.data.length ? res.data : [data];
+  }
+  startEdit(data, rows);
 }
 
 // ---- auth ----
