@@ -555,6 +555,11 @@ async function loadEditFromUrl() {
   if (!error && data) startEdit(data);
 }
 
+// 작성 중인 주문이 있으면 새로고침/페이지 이동 전에 브라우저가 한 번 확인 (저장·취소 후엔 resetForm으로 비워져 묻지 않음)
+window.addEventListener("beforeunload", (e) => {
+  if (!$("app").classList.contains("hidden") && (cart.size || $("f-수취인").value.trim() || $("f-연락처").value.trim())) e.preventDefault();
+});
+
 // ---- auth ----
 $("login-btn").addEventListener("click", async () => {
   $("login-err").textContent = "";
