@@ -113,27 +113,29 @@ function renderDailySummary(saleRows) {
   const byDay = {};
   saleRows.forEach(o => {
     const day = o.주문일 || "(미지정)";
-    if (!byDay[day]) byDay[day] = { mainCount: 0, mainQty: 0, accCount: 0, accQty: 0, amount: 0 };
+    if (!byDay[day]) byDay[day] = { sterilCount: 0, sterilQty: 0, potCount: 0, potQty: 0, accCount: 0, accQty: 0, amount: 0 };
     const v = byDay[day];
-    if (isMain(o)) { v.mainCount += 1; v.mainQty += o.수량 || 0; }
+    if (isSteril(o)) { v.sterilCount += 1; v.sterilQty += o.수량 || 0; }
+    else if (isPot(o)) { v.potCount += 1; v.potQty += o.수량 || 0; }
     else if (isAcc(o)) { v.accCount += 1; v.accQty += o.수량 || 0; }
     v.amount += Number(o.주문금액) || 0;
   });
   const list = Object.entries(byDay).sort((a, b) => a[0].localeCompare(b[0]));
   const totals = list.reduce((s, [, v]) => ({
-    mainCount: s.mainCount + v.mainCount, mainQty: s.mainQty + v.mainQty,
+    sterilCount: s.sterilCount + v.sterilCount, sterilQty: s.sterilQty + v.sterilQty,
+    potCount: s.potCount + v.potCount, potQty: s.potQty + v.potQty,
     accCount: s.accCount + v.accCount, accQty: s.accQty + v.accQty,
     amount: s.amount + v.amount,
-  }), { mainCount: 0, mainQty: 0, accCount: 0, accQty: 0, amount: 0 });
+  }), { sterilCount: 0, sterilQty: 0, potCount: 0, potQty: 0, accCount: 0, accQty: 0, amount: 0 });
 
   const row = (label, v, bold) => `
     <tr${bold ? ' style="font-weight:700;background:#f9fafb;"' : ""}>
-      <td>${esc(label)}</td><td>${v.mainCount}건</td><td>${v.mainQty}개</td><td>${v.accCount}건</td><td>${v.accQty}개</td><td>${v.amount.toLocaleString()}원</td>
+      <td>${esc(label)}</td><td>${v.sterilCount}건</td><td>${v.sterilQty}대</td><td>${v.potCount}건</td><td>${v.potQty}개</td><td>${v.accCount}건</td><td>${v.accQty}개</td><td>${v.amount.toLocaleString()}원</td>
     </tr>`;
 
   $("daily-tbody").innerHTML = list.length
     ? list.map(([day, v]) => row(day, v, false)).join("") + row("합계", totals, true)
-    : `<tr><td colspan="6" style="color:#999;">데이터 없음</td></tr>`;
+    : `<tr><td colspan="8" style="color:#999;">데이터 없음</td></tr>`;
 }
 
 function renderExpoSummary() {
