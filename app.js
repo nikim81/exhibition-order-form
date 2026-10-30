@@ -20,6 +20,35 @@ let currentGiftCartKey = null; // actual key this gift is stored under in `cart`
 let giftDelivery = "현장"; // "현장" | "배송"
 let editGiftBase = null; // 사은품 주문 수정 시 원본 상품 정보 (박람회 사은품 목록에 없어도 전달방식 변경 가능하게)
 
+// 작성 중인 주문 임시저장: 폰에서 당겨서 새로고침 등으로 페이지가 다시 열려도 같은 탭이면 그대로 복원
+// (sessionStorage라 탭을 닫으면 사라지고, 저장·취소 시 바로 지움)
+const DRAFT_KEY = "orderDraft";
+const DRAFT_FIELDS = ["f-수취인", "f-연락처", "f-우편번호", "f-주소", "f-상세주소", "f-배송메세지"];
+const DRAFT_CHECKS = ["f-계좌이체", "f-카드결제", "f-동의", "f-마케팅동의"];
+let savedDraft = null;
+try { savedDraft = JSON.parse(sessionStorage.getItem(DRAFT_KEY)); } catch {}
+let draftReady = false; // 복원 전에는 첫 화면 그리기가 저장된 초안을 덮어쓰지 않게 함
+function saveDraft() {
+  if (!draftReady || editMode) return;
+  const d = {
+    expoId: settings.id, cart: [...cart.entries()], currentTier, currentGiftKey, currentGiftCartKey, giftDelivery,
+    fields: Object.fromEntries(DRAFT_FIELDS.map(id => [id, $(id).value])),
+    checks: Object.fromEntries(DRAFT_CHECKS.map(id => [id, $(id).checked])),
+  };
+  try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch {}
+}
+function restoreDraft() {
+  const d = savedDraft;
+  savedDraft = null;
+  draftReady = true;
+  if (!d || d.expoId !== settings.id || new URLSearchParams(location.search).get("edit")) return;
+  cart = new Map(d.cart);
+  ({ currentTier, currentGiftKey, currentGiftCartKey, giftDelivery } = d);
+  DRAFT_FIELDS.forEach(id => { $(id).value = d.fields[id] || ""; });
+  DRAFT_CHECKS.forEach(id => { $(id).checked = !!d.checks[id]; });
+  renderAll();
+}
+
 // 수정 모드에서 다른 상품을 고르면 그 줄을 통째로 교체 (사은품 수정 상태도 함께 해제)
 function editReplaceRow() {
   cart.clear();
@@ -253,7 +282,10 @@ function renderCart() {
     }));
   const total = items.reduce((s, it) => s + (it.price || 0) * it.qty, 0);
   $("cart-total").innerHTML = items.length ? `<span>합계</span><strong>${total.toLocaleString()}원</strong>` : "";
+  saveDraft();
 }
+$("order-card").addEventListener("input", saveDraft);
+$("order-card").addEventListener("change", saveDraft);
 
 // 젖병소독기 / 액세서리 / 분유포트: 라벨 클릭 시 펼치기·접기
 document.querySelectorAll("label.fold").forEach(l =>
@@ -314,6 +346,7 @@ function showExpoPicker() {
       $("expo-picker").classList.add("hidden");
       $("order-card").classList.remove("hidden");
       resetForm();
+      restoreDraft();
       loadEditFromUrl();
     });
   });
@@ -347,6 +380,7 @@ $("addr-search-btn").addEventListener("click", () => {
     oncomplete: (data) => {
       $("f-주소").value = data.roadAddress || data.jibunAddress;
       $("f-우편번호").value = data.zonecode;
+      saveDraft();
       closeAddrModal();
       $("f-상세주소").focus();
     },
@@ -389,6 +423,7 @@ function resetForm() {
   $("f-동의").checked = false;
   $("f-마케팅동의").checked = false;
   $("err").textContent = "";
+  if (draftReady) try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
 }
 
 function genOrderNo() {
@@ -584,7 +619,7 @@ sb.auth.onAuthStateChange((event, session) => {
     // 콜백 안에서 바로 await sb.* 하면 auth 락 교착 가능 → 다음 틱으로 넘김
     setTimeout(async () => {
       const ready = await loadSettings();
-      if (ready) { resetForm(); loadEditFromUrl(); }
+      if (ready) { resetForm(); restoreDraft(); loadEditFromUrl(); }
     }, 0);
   } else {
     initedUserId = null;
