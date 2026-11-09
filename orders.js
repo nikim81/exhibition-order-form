@@ -101,8 +101,9 @@ function isOnSiteGift(o) {
   return (o.상품명 || "").startsWith("[사은품]") && !o.상품명.endsWith("(배송)");
 }
 
-function explodeOrder(o, bundleMap) {
-  const bundle = bundleMap[`${o.상품코드}|||${o.옵션명}`];
+function explodeOrder(o, bundleMap, fallbackMap) {
+  const key = `${o.상품코드}|||${o.옵션명}`;
+  const bundle = bundleMap[key] || fallbackMap[key];
   if (!bundle) return [o];
   return bundle.구성품.map((part, i) => ({
     ...o,
@@ -119,13 +120,16 @@ $("export-btn").addEventListener("click", async () => {
   const { data: expos, error: expoErr } = await sb.from("exhibitions").select("박람회명, 묶음구성").order("created_at", { ascending: false });
   if (expoErr) { alert(`묶음구성을 불러오지 못했습니다: ${expoErr.message}`); return; }
   const bundleMaps = {};
+  // 박람회 이름을 바꿔 재사용했거나 그 박람회에 묶음이 빠진 경우: 다른 박람회(최근 것 우선)의 같은 코드·옵션 묶음으로 분리
+  const fallbackMap = {};
   (expos || []).forEach(e => {
+    (e.묶음구성 || []).forEach(b => { if (!fallbackMap[b.코드옵션]) fallbackMap[b.코드옵션] = b; });
     if (bundleMaps[e.박람회명]) return;
     bundleMaps[e.박람회명] = {};
     (e.묶음구성 || []).forEach(b => { bundleMaps[e.박람회명][b.코드옵션] = b; });
   });
 
-  const exploded = expoFiltered().filter(o => !o.deleted_at && !isOnSiteGift(o)).flatMap(o => explodeOrder(o, bundleMaps[o.판매처] || {}));
+  const exploded = expoFiltered().filter(o => !o.deleted_at && !isOnSiteGift(o)).flatMap(o => explodeOrder(o, bundleMaps[o.판매처] || {}, fallbackMap));
   const rows = exploded.map(o => COLUMNS.map(c => o[c] ?? ""));
   const ws = XLSX.utils.aoa_to_sheet([COLUMNS, ...rows]);
   const wb = XLSX.utils.book_new();

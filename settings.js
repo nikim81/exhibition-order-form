@@ -230,10 +230,12 @@ $("bundle-part-add-btn").addEventListener("click", () => {
 });
 
 function renderBundleList() {
+  // 판매제품에 없는 코드·옵션의 묶음은 주문과 맞지 않아 사방넷 다운로드 때 분리되지 않음 (예: 예전 코드로 만든 템플릿)
+  const sold = new Set(state.판매제품.map(p => `${p.code}|||${p.option}`));
   $("bundle-list").innerHTML = state.묶음구성.map(b => `
     <div class="bundle-card" data-key="${b.코드옵션}">
       <div class="head">
-        <span>${b.상품명} (${b.코드옵션.replace("|||", " / ")})</span>
+        <span>${b.상품명} (${b.코드옵션.replace("|||", " / ")})${sold.has(b.코드옵션) ? "" : ` <strong style="color:#dc2626;">⚠ 판매제품에 없는 코드라 분리되지 않아요</strong>`}</span>
         <span><button data-edit="${b.코드옵션}">수정</button> <button data-del="${b.코드옵션}">삭제</button></span>
       </div>
       <ul>${b.구성품.map(c => `<li>${c.상품명} - ${c.옵션명} (${c.상품코드}) × ${c.수량}</li>`).join("")}</ul>
